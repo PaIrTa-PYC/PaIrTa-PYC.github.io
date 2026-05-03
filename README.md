@@ -1,6 +1,3 @@
 # 你知道吗？
-## stars是扫福瑞臭福瑞扫福瑞臭福瑞扫福瑞臭福瑞扫福瑞臭福瑞扫福瑞臭福瑞
-> 扫福瑞臭福瑞扫福瑞臭福瑞扫福瑞臭福瑞扫福瑞臭福瑞
-> 
-> ``` 我的B站：https://b23.tv/bYJyBri ```
-> 
+## stars是扫福瑞臭福瑞扫福瑞臭福瑞扫福瑞臭福瑞扫福瑞臭福瑞
+markdown @keyframes rainbow { 0% { color: #ff0000; } 17% { color: #ff9900; } 33% { color: #ffff00; } 50% { color: # 00ff00; } 67% { color: # 0099ff; } 83% { color: # 06333ff; } 100% { color: #ff0000; } } @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } } @keyframes wiggle { 0%, 100% { transform: rotate(-2deg); } 50% { transform: rotate(2deg); } } @keyframes glow { 0%, 100% { box-shadow: 0 0 5px #ff00ff; } 50% { box-shadow: 0 0 20px #ff00ff; } } @keyframes blink { 50% { opacity: 0; } } .rainbow { animation: rainbow 3s infinite linear; } .bounce { animation: bounce 1s infinite ease-in-out; display: inline-block; } .wiggle { animation: wiggle 0.5s infinite ease-in-out; display: inline-block; } .glow-box { animation: glow 2s infinite alternate; padding: 1rem; border-radius: 8px; background: # 01111111; } .blink { animation: blink 1s infinite step-end; } # 加纳加纳加纳加纳 > 加纳加纳加纳加纳 加纳加纳加纳加纳哦 --- ## 加纳加纳加纳加纳 - 加纳加纳加纳加纳 加纳加纳加纳加纳 加纳加纳加纳加纳 - 加纳加纳加纳加纳 加纳加纳加纳加纳 加纳加纳加纳加纳 - 加纳加纳加纳加纳 加纳加纳加纳加纳 加纳加纳加纳加纳 --- 加纳加纳!加纳加纳!加纳加纳加纳加纳加纳呀! 加纳加纳加纳加纳 加纳加纳加纳加纳 加纳加纳加纳加纳 加纳加纳加纳加纳 加纳加纳加纳加纳 加纳加纳加纳加纳 加纳加纳加纳加纳 加纳加纳加纳加纳 --- ## 加纳加纳加纳加纳 | 加纳加纳 | 加纳加纳 | 加纳加纳 | | ---- | ---- | ---- | | 加纳加纳加纳加纳 | ⭐⭐⭐⭐⭐ | 🔵🔵🔵 | | 加纳加纳加纳加纳 | ⭐⭐⭐ | 🔵🔵🔵🔵 | | 加纳加纳加纳加纳 | ⭐⭐⭐⭐⭐⭐⭐ | 🔵🔵🔵🔵🔵 | --- 加纳加纳!加纳加纳加纳!加纳! ```
