@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PaIrTa_PYC</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            border: none !important;
+            outline: none !important;
+        }
+
+        :root {
+            --glass: rgba(255, 255, 255, 0.15);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --text: #fff;
+            --accent: #9cc9ff;
+            --light: rgba(150, 200, 255, 0.3);
+            --card-bg: rgba(255,255,255,0.2);
+            --tag: rgba(130, 170, 255, 0.3);
+            --blue-text: #63a8ff;
+        }
+
+        [dark="true"] {
+            --glass: rgba(20, 30, 50, 0.4);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text: #ffffff;
+            --accent: #70a8ff;
+            --light: rgba(100, 150, 255, 0.25);
+            --card-bg: rgba(25, 35, 60, 0.3);
+            --tag: rgba(80, 120, 200, 0.3);
+            --blue-text: #7cb8ff;
+        }
+
+        body {
+            min-height: 100vh;
+            background: url("data/2.jpg") center/cover fixed;
+            padding: 20px;
+            overflow-x: hidden;
+            color: #fff;
+        }
+
+        /* 顶部按钮 位置正确 不偏移 */
+        .bg-toggle-btn {
+            position: fixed;
+            top: 20px;
+            right: 80px;
+            z-index: 9999;
+            width: 85px;
+            height: 46px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            cursor: pointer;
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            color: #fff;
+            white-space: nowrap;
+            transition: transform 0.3s ease;
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            width: 46px;
+            height: 46px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            cursor: pointer;
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            color: #fff;
+            transition: transform 0.3s ease;
+        }
+
+        .bg-toggle-btn:hover,
+        .theme-toggle:hover {
+            transform: translateY(-4px);
+        }
+
+        /* 左侧：主页 + 下载 */
+        .left-wrap {
+            position: fixed;
+            left: 20px;
+            top: 95px;
+            z-index: 99;
+            width: 180px;
+            /* 新增升起/下移动画 */
+            transition: all 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .left-wrap.hide-left {
+            opacity: 0;
+            transform: translateY(40px);
+            pointer-events: none;
+        }
+
+        .nav-card {
+            width: 180px;
+            min-height: 460px;
+            padding: 30px 15px;
+            background: var(--glass);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden !important;
+        }
+        .nav-item {
+            padding: 18px 15px;
+            border-radius: 12px;
+            cursor: pointer;
+            text-align: center;
+            font-size: 16px;
+            position: relative;
+            overflow: hidden;
+            color: #fff !important;
+        }
+        .nav-item::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            z-index: -1;
+            transform: translateY(-100%);
+            transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+        .nav-item.active::after {
+            transform: translateY(0);
+        }
+        .nav-item:hover {
+            color: #000 !important;
+            transform: translateY(-4px);
+        }
+
+        /* 右侧：公告卡片 */
+        .right-wrap {
+            position: fixed;
+            right: 20px;
+            top: 95px;
+            z-index: 99;
+            width: 180px;
+            /* 同动画 */
+            transition: all 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .right-wrap.hide-right {
+            opacity: 0;
+            transform: translateY(40px);
+            pointer-events: none;
+        }
+
+        .hello-card {
+            width: 180px;
+            height: 180px;
+            padding: 25px 15px;
+            background: var(--glass);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden !important;
+        }
+        .hello-text {
+            font-size: 16px;
+            color: var(--blue-text);
+            font-weight: 500;
+        }
+        .line-divider {
+            width: 80%;
+            height: 1px;
+            margin: 15px auto;
+            background: var(--glass-border);
+        }
+        .notice-title {
+            font-size: 15px;
+            color: #fff;
+            margin-bottom: 10px;
+        }
+        .notice-desc {
+            font-size: 14px;
+            color: #ccc;
+        }
+
+        /* 统一光晕 + 悬停效果 */
+        .glass-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle, var(--light) 0%, transparent 60%);
+            opacity: 0;
+            transition: opacity 0.4s;
+            pointer-events: none;
+        }
+        .glass-card:hover::before {
+            opacity: 1;
+            animation: light 3s linear infinite;
+        }
+        @keyframes light {
+            0% { transform: translate(-5%, -5%); }
+            50% { transform: translate(5%, 5%); }
+            100% { transform: translate(-5%, -5%); }
+        }
+        .glass-card:hover {
+            color: #000 !important;
+            font-weight: 500;
+            transform: translateY(-4px);
+        }
+
+        /* 主内容 */
+        .container {
+            max-width: 1000px;
+            margin: 80px auto 25px;
+            margin-left: 220px;
+            margin-right: 220px;
+            position: relative;
+            z-index: 2;
+            min-height: 600px;
+            /* 主卡片也加升起/下移动画 */
+            transition: all 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .container.hide-cards {
+            opacity: 0;
+            transform: translateY(40px);
+            pointer-events: none;
+        }
+
+        /* 主卡片 */
+        .main-card {
+            background: var(--glass) !important;
+            backdrop-filter: blur(14px) !important;
+            -webkit-backdrop-filter: blur(14px) !important;
+            border: 1px solid var(--glass-border) !important;
+            border-radius: 20px;
+            transition: all 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 25px;
+            opacity: 1 !important;
+            width: 100% !important;
+            height: auto !important;
+        }
+        .main-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle, var(--light) 0%, transparent 60%);
+            opacity: 0;
+            transition: opacity 0.4s;
+            pointer-events: none;
+        }
+        .main-card:hover::before {
+            opacity: 1;
+            animation: light 3s linear infinite;
+        }
+        .main-card:hover {
+            color: #000 !important;
+            transform: translateY(-4px);
+        }
+
+        /* 内容切换 */
+        .content-wrapper {
+            transition: all 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+        .content-wrapper.hidden {
+            opacity: 0;
+            transform: translateY(30px);
+            pointer-events: none;
+        }
+
+        /* 开发中卡片 */
+        .dev-card {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 100%;
+            min-height: 600px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            background: var(--glass);
+            backdrop-filter: blur(14px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+        .dev-card.show {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .header-card { padding: 40px; text-align: center; }
+        .avatar { width:130px; height:130px; border-radius:50%; border:4px solid var(--glass-border); margin-bottom:20px; object-fit:cover; }
+        .socials { display:flex; gap:20px; justify-content:center; margin-top:20px; }
+        .socials a { color:#fff !important; font-size:24px; transition:0.3s; text-decoration:none; }
+        .socials a.github:hover { color:#000 !important; transform:scale(1.15); }
+        .socials a.bilibili:hover { color:var(--accent) !important; transform:scale(1.15); }
+        .content-card { padding:30px; }
+        .content-card h2 { color:var(--accent); margin-bottom:20px; font-size:24px; padding-left:12px; }
+        .skills { display:flex; flex-wrap:wrap; gap:12px; margin-top:15px; }
+        .tag { padding:8px 16px; background:var(--tag); border-radius:30px; }
+
+        /* 版权声明毛玻璃卡片 */
+        .copyright-card {
+            background: var(--glass);
+            backdrop-filter: blur(14px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            font-size: 16px;
+            color: #fff;
+            margin-top: 5px;
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .copyright-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle, var(--light) 0%, transparent 60%);
+            opacity: 0;
+            transition: opacity 0.4s;
+        }
+        .copyright-card:hover::before {
+            opacity: 1;
+            animation: light 3s linear infinite;
+        }
+        .copyright-card:hover {
+            color: #000 !important;
+            transform: translateY(-4px);
+        }
+    </style>
+</head>
+<body>
+
+<!-- 顶部按钮 -->
+<div class="bg-toggle-btn" id="bgBtn">隐藏卡片</div>
+<div class="theme-toggle" id="themeBtn"><i class="fa-solid fa-moon"></i></div>
+
+<!-- 左侧：主页 下载 -->
+<div class="left-wrap" id="leftSide">
+    <div class="nav-card glass-card">
+        <div class="nav-item active" data-page="home">主页</div>
+        <div class="nav-item" data-page="download">下载</div>
+    </div>
+</div>
+
+<!-- 右侧：公告 -->
+<div class="right-wrap" id="rightSide">
+    <div class="hello-card glass-card">
+        <div class="hello-text" id="helloText">早上好</div>
+        <div class="line-divider"></div>
+        <div class="notice-title">公告</div>
+        <div class="notice-desc">暂无</div>
+    </div>
+</div>
+
+<!-- 主内容 -->
+<div class="container" id="mainContainer">
+    <div class="dev-card" id="devCard">开发中，暂未开放</div>
+    <div class="content-wrapper" id="content">
+        <div class="header-card main-card">
+            <img src="data/1.jpg" alt="头像" class="avatar">
+            <h1>PaIrTa_PYC</h1>
+            <p>你可以期待太阳从东方升起,而风却随心所欲的从四面八方吹来。</p>
+            <div class="socials">
+                <!-- 已替换为你的专属链接，新标签页打开 -->
+                <a href="https://github.com/PaIrTa-PYC" target="_blank" class="github"><i class="fab fa-github"></i></a>
+                <a href="https://space.bilibili.com/652131791" target="_blank" class="bilibili"><i class="fab fa-bilibili"></i></a>
+            </div>
+        </div>
+
+        <div class="content-card main-card">
+            <h2>关于我</h2>
+            <p>我是PaIrTa_PYC？</p>
+        </div>
+
+        <div class="content-card main-card">
+            <h2>我的技能</h2>
+            <div class="skills">
+                <span class="tag">C++</span>
+            </div>
+        </div>
+
+        <div class="content-card main-card">
+            <h2>联系我</h2>
+            <p><i class="fa-solid fa-envelope"></i> 邮箱：3834554060@qq.com</p>
+        </div>
+
+        <!-- 版权毛玻璃卡片 -->
+        <div class="copyright-card">
+            Copyright © PaIrTa_PYC All Rights Reserved
+        </div>
+    </div>
+</div>
+
+<script>
+    // 问候语
+    function setHello() {
+        let h = new Date().getHours();
+        let t = "晚上好";
+        if (h >= 5 && h < 10) t = "早上好";
+        else if (h >= 10 && h < 12) t = "中午好";
+        else if (h >= 12 && h < 17) t = "下午好";
+        else if (h >= 17 && h < 19) t = "傍晚好";
+        document.getElementById("helloText").innerText = t;
+    }
+    setHello();
+
+    // 深色模式
+    const themeBtn = document.getElementById('themeBtn');
+    let dark = false;
+    themeBtn.onclick = () => {
+        dark = !dark;
+        document.body.setAttribute('dark', dark);
+        themeBtn.innerHTML = dark ? '<i class="fa-solid fa-sun"></i>' : '<i class="fa-solid fa-moon"></i>';
+    };
+
+    // 隐藏/显示 带动画：下移隐藏，升起显示
+    const bgBtn = document.getElementById('bgBtn');
+    const container = document.getElementById('mainContainer');
+    const leftSide = document.getElementById('leftSide');
+    const rightSide = document.getElementById('rightSide');
+    let showCards = true;
+
+    bgBtn.onclick = () => {
+        showCards = !showCards;
+        if (showCards) {
+            // 升起
+            container.classList.remove('hide-cards');
+            leftSide.classList.remove('hide-left');
+            rightSide.classList.remove('hide-right');
+            bgBtn.innerText = "隐藏卡片";
+        } else {
+            // 下移收起
+            container.classList.add('hide-cards');
+            leftSide.classList.add('hide-left');
+            rightSide.classList.add('hide-right');
+            bgBtn.innerText = "显示卡片";
+        }
+    };
+
+    // 主页 ↔ 下载 切换
+    const navItems = document.querySelectorAll('.nav-item');
+    const content = document.getElementById('content');
+    const devCard = document.getElementById('devCard');
+
+    navItems.forEach(item => {
+        item.onclick = () => {
+            navItems.forEach(i => i.classList.remove('active'));
+            item.classList.add('active');
+
+            if (item.dataset.page === 'download') {
+                content.classList.add('hidden');
+                devCard.classList.add('show');
+            } else {
+                content.classList.remove('hidden');
+                devCard.classList.remove('show');
+            }
+        };
+    });
+</script>
+</body>
+</html>
