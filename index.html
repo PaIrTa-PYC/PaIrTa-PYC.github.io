@@ -13,6 +13,13 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             border: none !important;
             outline: none !important;
+
+            /* 禁止选中全站内容 */
+            -webkit-user-select: none !important;
+            -moz-user-select: none !important;
+            -ms-user-select: none !important;
+            user-select: none !important;
+            -webkit-user-drag: none !important;
         }
 
         :root {
@@ -31,7 +38,7 @@
             --glass-border: rgba(255, 255, 255, 0.15);
             --text: #ffffff;
             --accent: #70a8ff;
-            --light: rgba(100, 150, 255, 0.25);
+            --light: rgba(100, 150, 200, 0.25);
             --card-bg: rgba(25, 35, 60, 0.3);
             --tag: rgba(80, 120, 200, 0.3);
             --blue-text: #7cb8ff;
@@ -70,6 +77,11 @@
             font-weight: 500;
             white-space: nowrap;
             opacity: 0;
+            cursor: pointer;
+        }
+        .dynamic-island:hover {
+            transform: translateX(-50%) scale(1.2);
+            transition: transform 0.2s ease;
         }
         .dynamic-island.expand {
             transform: translateX(-50%) scale(1);
@@ -263,6 +275,16 @@
         .avatar { width:130px; height:130px; border-radius:50%; border:4px solid var(--glass-border); margin-bottom:20px; object-fit:cover; }
         .socials { display:flex; gap:20px; justify-content:center; margin-top:20px; }
         .socials a { color:#fff !important; font-size:24px; transition:0.3s; text-decoration:none; }
+        
+        /* GitHub 悬停变黑 */
+        .socials a.github:hover {
+            color: #000 !important;
+        }
+        /* B站 悬停变蓝 */
+        .socials a.bilibili:hover {
+            color: #00a1d6 !important;
+        }
+
         .content-card { padding:30px; }
         .content-card h2 { color:var(--accent); margin-bottom:20px; font-size:24px; padding-left:12px; }
         .skills { display:flex; flex-wrap:wrap; gap:12px; margin-top:15px; }
@@ -319,15 +341,13 @@
         .download-card:hover .download-card-desc {
             color: #000 !important;
         }
-
-        /* 放大卡片 + 再上移10px + 深色模式完全生效 */
         .download-card.expand {
             width: 420px !important;
             height: 480px !important;
-            top: calc(42% - 10px) !important; /* 再上移 10px */
+            top: 25% !important;
             left: 50% !important;
             transform: translate(-50%, -50%) scale(1) !important;
-            background: var(--glass) !important; /* 跟随深色模式 */
+            background: var(--glass) !important;
             border-color: var(--glass-border) !important;
             backdrop-filter: blur(20px) !important;
             -webkit-backdrop-filter: blur(20px) !important;
@@ -361,8 +381,12 @@
             opacity: 0;
             transition: all 0.3s ease;
         }
+        .close-btn:hover {
+            background: #d32f2f;
+        }
         .download-card.expand .close-btn {
-            opacity: 1;
+            opacity: 1 !important;
+            pointer-events: all !important;
         }
         .download-card-img {
             width: 120px;
@@ -401,7 +425,10 @@
             text-decoration: none;
             opacity: 0;
             pointer-events: none;
-            transition: all 0.4s ease;
+            transition: all 0.3s ease;
+        }
+        .download-btn:hover {
+            background: #0D47A1;
         }
         .download-card.expand .download-btn {
             opacity: 1 !important;
@@ -476,36 +503,65 @@
     const navItems = document.querySelectorAll('.nav-item');
     const content = document.getElementById('content');
     const devCard = document.querySelector('.dev-card');
+    let islandTimer = null;
 
-    let visitCount = localStorage.getItem('visitCount') || 0;
-    visitCount++;
+    // 显示时间
+    function showDateTime() {
+        clearTimeout(islandTimer);
+        islandTimer = setTimeout(() => {
+            const now = new Date();
+            const date = now.getFullYear() + "-" + String(now.getMonth()+1).padStart(2,'0') + "-" + String(now.getDate()).padStart(2,'0');
+            const time = String(now.getHours()).padStart(2,'0') + ":" + 
+                         String(now.getMinutes()).padStart(2,'0') + ":" + 
+                         String(now.getSeconds()).padStart(2,'0');
+            island.innerText = `${date} ${time}`;
+            island.classList.add('time-mode');
+        }, 100);
+    }
+
+    // 访问次数
+    let visitCount = localStorage.getItem('visitCount');
+    if (!visitCount) {
+        visitCount = 1;
+    } else {
+        visitCount = parseInt(visitCount) + 1;
+    }
     localStorage.setItem('visitCount', visitCount);
 
+    function getWelcomeText() {
+        if (visitCount === 1) {
+            return "欢迎来到PaIrTa_PYC的小站~";
+        }
+        if (visitCount % 10 === 0) {
+            return `你已经访问${visitCount}次啦~酱酱~`;
+        }
+        if (visitCount >= 2 && visitCount <= 9) {
+            return `这是你的第${visitCount}次访问~`;
+        }
+        return `欢迎回来~这是你的第${visitCount}次访问`;
+    }
+
+    // 问候语
     function setGreeting() {
         const hour = new Date().getHours();
-        if (hour >= 6 && hour < 10) {
-            greetText.textContent = "早上好";
-        } else if (hour >= 10 && hour < 13) {
-            greetText.textContent = "中午好";
-        } else if (hour >= 13 && hour < 18) {
-            greetText.textContent = "傍晚好";
-        } else {
-            greetText.textContent = "晚上好";
-        }
+        let text = "";
+        if (hour >= 6 && hour < 10) text = "早上好";
+        else if (hour >= 10 && hour < 13) text = "中午好";
+        else if (hour >= 13 && hour < 18) text = "下午好";
+        else text = "晚上好";
+        greetText.textContent = text;
     }
 
-    function showDateTime() {
-        const now = new Date();
-        const date = now.getFullYear() + "-" + String(now.getMonth()+1).padStart(2,'0') + "-" + String(now.getDate()).padStart(2,'0');
-        const time = String(now.getHours()).padStart(2,'0') + ":" + String(now.getMinutes()).padStart(2,'0');
-        island.innerText = `${date} ${time}`;
-        island.classList.add('time-mode');
-    }
+    // 深色模式
+    let darkMode = localStorage.getItem('darkMode') !== 'false';
+    document.body.toggleAttribute('dark', darkMode);
+    themeBtn.innerHTML = darkMode ? '<i class="fa-solid fa-sun"></i>' : '<i class="fa-solid fa-moon"></i>';
 
-    let darkMode = false;
     themeBtn.onclick = () => {
+        clearTimeout(islandTimer);
         darkMode = !darkMode;
         document.body.toggleAttribute('dark', darkMode);
+        localStorage.setItem('darkMode', darkMode);
         island.classList.remove('time-mode');
 
         if(darkMode) {
@@ -518,16 +574,17 @@
         setTimeout(showDateTime, 2000);
     };
 
+    // 下载卡片
     dcard.onclick = (e) => {
         if(e.target.closest('.download-btn')) return;
         dcard.classList.add('expand');
     };
-
     closeBtn.onclick = (e) => {
         e.stopPropagation();
         dcard.classList.remove('expand');
     };
 
+    // 导航
     navItems.forEach(item => {
         item.onclick = () => {
             navItems.forEach(i => i.classList.remove('active'));
@@ -544,12 +601,27 @@
         };
     });
 
+    // 页面加载
     window.addEventListener("load", () => {
         setGreeting();
         island.classList.add("expand");
-        island.innerText = `欢迎~你是第 ${visitCount} 位访问的猫娘~`;
-        setTimeout(() => island.classList.add("shrink"), 700);
-        setTimeout(showDateTime, 2500);
+        island.innerText = getWelcomeText();
+
+        setTimeout(() => {
+            island.classList.add("shrink");
+            showDateTime();
+        }, 3000);
+
+        setInterval(() => {
+            if (island.innerText.includes(":")) {
+                const now = new Date();
+                const date = now.getFullYear() + "-" + String(now.getMonth()+1).padStart(2,'0') + "-" + String(now.getDate()).padStart(2,'0');
+                const time = String(now.getHours()).padStart(2,'0') + ":" + 
+                             String(now.getMinutes()).padStart(2,'0') + ":" + 
+                             String(now.getSeconds()).padStart(2,'0');
+                island.innerText = `${date} ${time}`;
+            }
+        }, 1000);
     });
 </script>
 </body>
