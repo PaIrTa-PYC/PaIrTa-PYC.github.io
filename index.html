@@ -53,7 +53,7 @@
             top: 20px;
             left: 50%;
             transform: translateX(-50%) scale(0.9);
-            width: 260px;
+            width: 320px;
             height: 46px;
             background: var(--glass);
             backdrop-filter: blur(12px);
@@ -63,6 +63,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            gap:12px;
             padding: 0 20px;
             transition: all 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
             box-shadow: 0 8px 32px rgba(0,0,0,0.1);
@@ -82,12 +83,12 @@
         }
         .dynamic-island.expand {
             width: auto;
-            min-width: 260px;
+            min-width: 320px;
             max-width: 90vw;
             padding: 0 30px;
         }
         .dynamic-island.time-mode {
-            width: 260px;
+            width: 320px;
             height: 46px;
             padding: 0 14px;
             font-size: 14px;
@@ -102,17 +103,20 @@
             align-items: center;
             justify-content: center;
             gap: 8px;
+            overflow: hidden;
         }
 
         .login-title {
             font-size: 18px;
             font-weight: 600;
             text-align: center;
+            opacity: 0;
+            transition: opacity 0.4s 0.2s ease;
         }
         .login-desc {
             font-size: 14px;
-            opacity: 0.9;
-            text-align: center;
+            opacity: 0;
+            transition: opacity 0.4s 0.3s ease;
         }
         .username-input {
             width: 70%;
@@ -122,9 +126,15 @@
             color: #fff;
             text-align: center;
             font-size: 15px;
-            transition: all 0.3s ease;
+            transition: all 0.3s ease, opacity 0.4s 0.4s ease;
             pointer-events: auto !important;
             z-index: 10 !important;
+            opacity: 0;
+        }
+        .login-mode-active .login-title,
+        .login-mode-active .login-desc,
+        .login-mode-active .username-input {
+            opacity: 1;
         }
         .username-input:focus {
             background: rgba(255,255,255,0.3);
@@ -428,6 +438,7 @@
         .download-card.expand .download-card-img { width: 180px; height: 180px; }
         .download-card-title { font-size: 17px; color: #ffffff; font-weight: 600; margin-bottom: 8px; }
         .download-card-desc { font-size: 13px; color: #eee; line-height: 1.4; }
+        
         .btn-group {
             position: absolute;
             left: 25px;
@@ -435,7 +446,15 @@
             bottom: 25px;
             display: flex;
             gap: 10px;
+            opacity: 0;
+            pointer-events: none;
+            transition: 0.3s;
         }
+        .download-card.expand .btn-group {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        
         .down-btn {
             flex: 1;
             padding: 10px 0;
@@ -454,7 +473,7 @@
             flex: 1;
             padding: 10px 0;
             border-radius: 12px;
-            background: #666;
+            background: rgba(102,102,102,0.6);
             color: #fff;
             font-size: 15px;
             text-align: center;
@@ -462,7 +481,96 @@
             transition: all 0.3s ease;
         }
         .close-card-btn:hover {
-            background: #555;
+            background: rgba(80,80,80,0.8);
+        }
+
+        .music-player {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 340px;
+            background: var(--glass);
+            backdrop-filter: blur(15px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            padding: 12px 15px;
+            gap: 8px;
+            z-index: 999;
+            transition: all 0.3s ease;
+        }
+        .music-player:hover {
+            transform: translateY(-5px);
+        }
+        .music-main {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .music-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .music-btn {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 15px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .music-btn:hover {
+            background: rgba(255,255,255,0.25);
+            transform: scale(1.1);
+        }
+        .music-info {
+            flex: 1;
+            overflow: hidden;
+        }
+        .music-title {
+            font-size: 14px;
+            color: #fff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .music-progress {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+        }
+        .progress-time {
+            font-size: 12px;
+            color: #fff;
+            min-width: 40px;
+            text-align: center;
+        }
+        .progress-bar {
+            flex: 1;
+            height: 6px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 3px;
+            position: relative;
+            cursor: pointer;
+            overflow: hidden;
+        }
+        .progress-fill {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            background: var(--accent);
+            border-radius: 3px;
+            transition: width 0.1s linear;
+            width: 0%;
         }
     </style>
 </head>
@@ -499,6 +607,28 @@
     </div>
 </div>
 
+<!-- 音乐播放器 -->
+<div class="music-player">
+    <div class="music-main">
+        <div class="music-controls">
+            <div class="music-btn" id="prevBtn"><i class="fa-solid fa-backward"></i></div>
+            <div class="music-btn" id="playBtn"><i class="fa-solid fa-play"></i></div>
+            <div class="music-btn" id="nextBtn"><i class="fa-solid fa-forward"></i></div>
+        </div>
+        <div class="music-info">
+            <div class="music-title" id="musicTitle">正在加载音乐...</div>
+        </div>
+    </div>
+    <div class="music-progress">
+        <div class="progress-time" id="currentTime">0:00</div>
+        <div class="progress-bar" id="progressBar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <div class="progress-time" id="totalTime">0:00</div>
+    </div>
+</div>
+<audio id="audioPlayer"></audio> <!-- 这次补了闭合标签！ -->
+
 <div class="container">
     <div class="dev-card">
         <div class="download-card" id="dcard">
@@ -506,7 +636,7 @@
             <div class="download-card-title">布吉岛材质包1.8</div>
             <div class="download-card-desc">适用于 1.20.1 的我的世界布吉岛服务器材质包</div>
             <div class="btn-group">
-                <a href="https://developer3.lanrar.com/file/?AWdUag4/U2IBCFNrBDFSPgM8DzdUyVfyBWEAJlPqVO0Iiwa0WZQO0we0ULQAz126VpEClwWyUOZQ/1e0ANBb3wHDVKQON1M2AXlTPQRwUpED/g8+VFBXZAU0AH5TUlR1CCYGK1ltDioHd1BgAD1dMFZpAlgFM1A2UGpXYwBoW2IBMlQxDmdTNQFhUzAEdlI1AyoPN1Q5V20FMQAxUz1UYwg8BmVZIg4qByFQOwBmXWxWPgIyBXVQYlBvV34AbFtsAS5UNg5mUzUBY1M8BGRSYgM9Dz5UO1dkBWEAMlNsVGQIawYwWTIOPAdlUDIAbV1sVjsCMwVpUDZQZldlADpbYwE5VC0OKVNuASdTIwQlUiADPA94VGJXMQU/ADJTOlRiCDoGY1kyDmMHd1ByAD1dMVZpAmEFZ1BjUGBXZgBlW28BM1Q0DmZTPgFkUysEflJ1Az8PZlR8V2gFMwAxUzhUbQg8BmFZPQ5oB2FQMgByXSlWfAJwBWdQY1BgV2QAaFtuAThUMw5mUzEBZlMjBCVSOgMpDzdUOldnBTIAKFM9VGcIMQZ/WTAOagd/UDQAZl1sViICIQU+UD1QIFc/AANbOQFqVD4OY1MpAXFTcQQpUiMDPA9VVH5XNAU/ADY=&toolsdown" class="down-btn" target="_blank">下载</a>
+                <a href="https://pairta-pyc.lanzoub.com/isNhd32tf78f" class="down-btn" target="_blank">下载</a>
                 <div class="close-card-btn">关闭</div>
             </div>
         </div>
@@ -539,210 +669,266 @@
 </div>
 
 <script>
-    const island = document.getElementById("visitText");
-    const userInfo = document.getElementById("userInfo");
-    const showName = document.getElementById("showName");
-    const userModal = document.getElementById("userModal");
-    const modalName = document.getElementById("modalName");
-    const logoutBtn = document.getElementById("logoutBtn");
-    const themeBtn = document.getElementById("themeBtn");
-    const greetText = document.getElementById("greetText");
-    const navItems = document.querySelectorAll('.nav-item');
-    const content = document.getElementById('content');
-    const devCard = document.querySelector('.dev-card');
-    const dcard = document.getElementById('dcard');
-    const closeCardBtn = document.querySelector('.close-card-btn');
-    let islandTimer = null;
+document.oncontextmenu = () => false;
+document.onkeydown = e => {
+    if(e.key === 'F12' || (e.ctrlKey && e.shiftKey && e.key === 'I') || (e.ctrlKey && e.key === 'U')) return false;
+};
+setInterval(()=>{if(window.console)console.clear();},100);
+window.devtoolsOpen=false;
+setInterval(()=>{let s=performance.now();debugger;if(performance.now()-s>100)window.devtoolsOpen=true;},1000);
+Object.defineProperty(window,'devtoolsOpen',{get(){location.reload();}});
 
-    const savedName = localStorage.getItem('username');
-    const skipLogin = localStorage.getItem('skipLogin');
+const island = document.getElementById("visitText");
+const userInfo = document.getElementById("userInfo");
+const showName = document.getElementById("showName");
+const userModal = document.getElementById("userModal");
+const modalName = document.getElementById("modalName");
+const logoutBtn = document.getElementById("logoutBtn");
+const themeBtn = document.getElementById("themeBtn");
+const greetText = document.getElementById("greetText");
+const navItems = document.querySelectorAll('.nav-item');
+const content = document.getElementById('content');
+const devCard = document.querySelector('.dev-card');
+const dcard = document.getElementById('dcard');
+const closeCardBtn = document.querySelector('.close-card-btn');
+let islandTimer = null;
 
-    function adaptIslandWidth(text){
-        const len = text.length;
-        let baseW = 260;
-        if(len > 8) baseW = 260 + (len - 8) * 18;
-        island.style.width = baseW + "px";
-    }
+const savedName = localStorage.getItem('username');
+const skipLogin = localStorage.getItem('skipLogin');
 
-    function showDateTime() {
-        clearTimeout(islandTimer);
-        islandTimer = setTimeout(() => {
-            if (island.classList.contains('login-mode')) return;
-            const now = new Date();
-            const date = now.getFullYear() + "-" + String(now.getMonth()+1).padStart(2,'0') + "-" + String(now.getDate()).padStart(2,'0');
-            const time = String(now.getHours()).padStart(2,'0') + ":" + String(now.getMinutes()).padStart(2,'0') + ":" + String(now.getSeconds()).padStart(2,'0');
-            const timeStr = `${date} ${time}`;
-            island.innerText = timeStr;
-            adaptIslandWidth(timeStr);
-            island.classList.add('time-mode');
-        }, 100);
-    }
+function adaptIslandWidth(text){
+    const len = text.length;
+    let baseW = 320;
+    if(len > 16) baseW = 320 + (len - 16) * 12;
+    island.style.width = baseW + "px";
+}
 
-    function setGreeting() {
-        const hour = new Date().getHours();
-        let text = "";
-        if (hour >= 6 && hour < 10) text = "早上好";
-        else if (hour >= 10 && hour < 13) text = "中午好";
-        else if (hour >= 13 && hour < 18) text = "下午好";
-        else text = "晚上好";
-        greetText.textContent = text;
-    }
+function showDateTime() {
+    clearTimeout(islandTimer);
+    islandTimer = setTimeout(() => {
+        if (island.classList.contains('login-mode')) return;
+        const now = new Date();
+        const yy = String(now.getFullYear()).slice(-2);
+        const mm = String(now.getMonth()+1).padStart(2,'0');
+        const dd = String(now.getDate()).padStart(2,'0');
+        const hh = String(now.getHours()).padStart(2,'0');
+        const mi = String(now.getMinutes()).padStart(2,'0');
+        const ss = String(now.getSeconds()).padStart(2,'0');
+        const dateStr = `<i class="fa-solid fa-calendar-days"></i> ${yy}-${mm}-${dd}`;
+        const timeStr = `<i class="fa-solid fa-clock"></i> ${hh}:${mi}:${ss}`;
+        island.innerHTML = `${dateStr} · ${timeStr}`;
+        island.classList.add('time-mode');
+    }, 100);
+}
 
-    function showLoginUI() {
-        clearTimeout(islandTimer);
-        island.classList.add("login-mode");
-        island.innerHTML = `
-            <div class="login-title">登录</div>
-            <div class="login-desc">怎么称呼你？</div>
-            <input type="text" class="username-input" id="usernameInput" placeholder="请输入你的名字" autocomplete="off">
-        `;
-        const input = document.getElementById('usernameInput');
-        input.focus();
-        input.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                const name = input.value.trim();
-                if (!name) return;
-                localStorage.setItem('username', name);
-                localStorage.removeItem('skipLogin');
-                showName.innerText = name;
-                modalName.innerText = name;
-                userInfo.classList.add('show');
+function setGreeting() {
+    const hour = new Date().getHours();
+    let text = "";
+    if (hour >= 6 && hour < 10) text = "早上好";
+    else if (hour >= 10 && hour < 13) text = "中午好";
+    else if (hour >= 13 && hour < 18) text = "下午好";
+    else text = "晚上好";
+    greetText.textContent = text;
+}
 
-                island.classList.remove('login-mode');
-                island.classList.add('expand');
-                const welcomeTxt = `欢迎你，${name}~`;
-                island.innerText = welcomeTxt;
-                adaptIslandWidth(welcomeTxt);
+function showLoginUI() {
+    clearTimeout(islandTimer);
+    island.classList.add("login-mode");
+    island.classList.add("login-mode-active");
+    island.innerHTML = `
+        <div class="login-title">登录</div>
+        <div class="login-desc">怎么称呼你？</div>
+        <input type="text" class="username-input" id="usernameInput" placeholder="请输入你的名字" autocomplete="off">
+    `;
+    const input = document.getElementById('usernameInput');
+    setTimeout(()=>input.focus(),400);
+    input.addEventListener('keydown',e=>{
+        if(e.key==='Enter'){
+            const name = input.value.trim();
+            if(!name)return;
+            localStorage.setItem('username',name);
+            localStorage.removeItem('skipLogin');
+            showName.innerText=name;
+            modalName.innerText=name;
+            userInfo.classList.add('show');
+            island.classList.remove('login-mode','login-mode-active');
+            island.classList.add('expand');
+            island.innerText=`欢迎你，${name}~`;
+            adaptIslandWidth(island.innerText);
+            setTimeout(showDateTime,3000);
+        }
+    });
+}
 
-                setTimeout(() => {
-                    showDateTime();
-                }, 3000);
-            }
-        });
-    }
+let darkMode = localStorage.getItem('darkMode') !== 'false';
+document.body.toggleAttribute('dark',darkMode);
+themeBtn.innerHTML = darkMode ? '<i class="fa-solid fa-sun"></i>' : '<i class="fa-solid fa-moon"></i>';
 
-    let darkMode = localStorage.getItem('darkMode') !== 'false';
-    document.body.toggleAttribute('dark', darkMode);
+themeBtn.onclick = () => {
+    clearTimeout(islandTimer);
+    darkMode = !darkMode;
+    document.body.toggleAttribute('dark',darkMode);
+    localStorage.setItem('darkMode',darkMode);
+    island.classList.remove('time-mode');
+    const tip = darkMode ? "已切换成深色模式" : "已切换成浅色模式";
+    island.innerText=tip;
+    adaptIslandWidth(tip);
     themeBtn.innerHTML = darkMode ? '<i class="fa-solid fa-sun"></i>' : '<i class="fa-solid fa-moon"></i>';
+    setTimeout(showDateTime,2000);
+};
 
-    themeBtn.onclick = () => {
-        clearTimeout(islandTimer);
-        darkMode = !darkMode;
-        document.body.toggleAttribute('dark', darkMode);
-        localStorage.setItem('darkMode', darkMode);
-        island.classList.remove('time-mode');
-        const tipTxt = darkMode ? "已切换成深色模式" : "已切换成浅色模式";
-        island.innerText = tipTxt;
-        adaptIslandWidth(tipTxt);
-        themeBtn.innerHTML = darkMode ? '<i class="fa-solid fa-sun"></i>' : '<i class="fa-solid fa-moon"></i>';
-        setTimeout(showDateTime, 2000);
+dcard.onclick = e=>{
+    if(e.target.closest('.down-btn')||e.target.closest('.close-card-btn'))return;
+    dcard.classList.add('expand');
+};
+closeCardBtn.onclick = e=>{
+    e.stopPropagation();
+    dcard.classList.remove('expand');
+};
+document.addEventListener('click',e=>{
+    if(!dcard.contains(e.target))dcard.classList.remove('expand');
+});
+
+navItems.forEach(item=>{
+    item.onclick=()=>{
+        navItems.forEach(i=>i.classList.remove('active'));
+        item.classList.add('active');
+        content.classList.toggle('hide',item.dataset.page==='download');
+        devCard.classList.toggle('show',item.dataset.page==='download');
+        if(item.dataset.page!=='download')dcard.classList.remove('expand');
     };
+});
 
-    dcard.onclick = (e) => {
-        if(e.target.closest('.down-btn') || e.target.closest('.close-card-btn')) return;
-        dcard.classList.add('expand');
-    };
-    closeCardBtn.onclick = (e) => {
-        e.stopPropagation();
-        dcard.classList.remove('expand');
-    };
+userInfo.onclick = e=>{
+    e.stopPropagation();
+    const name = localStorage.getItem('username');
+    if(!name||name==='guest')showLoginUI();
+    else userModal.classList.add('show');
+};
+userModal.onclick=e=>e.stopPropagation();
+document.body.onclick=()=>userModal.classList.remove('show');
 
-    document.addEventListener('click',(e)=>{
-        if(!dcard.contains(e.target)){
-            dcard.classList.remove('expand');
-        }
-    });
+logoutBtn.onclick=()=>{
+    localStorage.setItem('username','guest');
+    localStorage.setItem('skipLogin','true');
+    showName.innerText='guest';
+    modalName.innerText='guest';
+    userModal.classList.remove('show');
+    island.classList.remove('login-mode','time-mode','login-mode-active');
+    island.classList.add('expand');
+    island.innerText='已退出登录';
+    adaptIslandWidth(island.innerText);
+    setTimeout(showDateTime,2000);
+};
 
-    navItems.forEach(item => {
-        item.onclick = () => {
-            navItems.forEach(i => i.classList.remove('active'));
-            item.classList.add('active');
-            content.classList.toggle('hide', item.dataset.page === 'download');
-            devCard.classList.toggle('show', item.dataset.page === 'download');
-            if(item.dataset.page !== 'download') dcard.classList.remove('expand');
-        };
-    });
+const audioPlayer = document.getElementById('audioPlayer');
+const playBtn = document.getElementById('playBtn');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+const musicTitle = document.getElementById('musicTitle');
+const progressFill = document.getElementById('progressFill');
+const progressBar = document.getElementById('progressBar');
+const currentTimeEl = document.getElementById('currentTime');
+const totalTimeEl = document.getElementById('totalTime');
 
-    userInfo.onclick = (e) => {
-        e.stopPropagation();
-        const name = localStorage.getItem('username');
-        if (!name || name === 'guest') {
+const playlist = ["《你若三东》全损版.mp3","《你若三东》(DJ沈乐版）.mp3"];
+let currentIndex=0,isPlaying=false,isSeeking=false;
+
+function formatTime(s){
+    let m=Math.floor(s/60),sec=Math.floor(s%60);
+    return `${m}:${sec<10?'0'+sec:sec}`;
+}
+function loadMusic(){
+    let src=`music/${playlist[currentIndex]}`;
+    audioPlayer.src=src;
+    musicTitle.textContent=playlist[currentIndex].replace('.mp3','');
+    audioPlayer.load();
+}
+function updateProgress(){
+    if(isSeeking)return;
+    let pct=(audioPlayer.currentTime/audioPlayer.duration)*100||0;
+    progressFill.style.width=pct+'%';
+    currentTimeEl.textContent=formatTime(audioPlayer.currentTime);
+}
+function setTotalTime(){totalTimeEl.textContent=formatTime(audioPlayer.duration||0);}
+function togglePlay(){
+    if(isPlaying){audioPlayer.pause();playBtn.innerHTML='<i class="fa-solid fa-play"></i>';}
+    else{audioPlayer.play();playBtn.innerHTML='<i class="fa-solid fa-pause"></i>';}
+    isPlaying=!isPlaying;
+}
+function prevMusic(){
+    currentIndex=(currentIndex-1+playlist.length)%playlist.length;
+    loadMusic();
+    audioPlayer.play().then(()=>{isPlaying=true;playBtn.innerHTML='<i class="fa-solid fa-pause"></i>';});
+}
+function nextMusic(){
+    currentIndex=(currentIndex+1)%playlist.length;
+    loadMusic();
+    audioPlayer.play().then(()=>{isPlaying=true;playBtn.innerHTML='<i class="fa-solid fa-pause"></i>';});
+}
+
+progressBar.addEventListener('mousedown',e=>{
+    isSeeking=true;
+    let rect=progressBar.getBoundingClientRect();
+    let pct=(e.clientX-rect.left)/rect.width;
+    audioPlayer.currentTime=pct*audioPlayer.duration;
+    updateProgress();
+});
+window.addEventListener('mousemove',e=>{
+    if(!isSeeking)return;
+    let rect=progressBar.getBoundingClientRect();
+    let pct=Math.max(0,Math.min(1,(e.clientX-rect.left)/rect.width));
+    audioPlayer.currentTime=pct*audioPlayer.duration;
+    updateProgress();
+});
+window.addEventListener('mouseup',()=>isSeeking=false);
+
+audioPlayer.addEventListener('timeupdate',updateProgress);
+audioPlayer.addEventListener('loadedmetadata',setTotalTime);
+audioPlayer.addEventListener('ended',nextMusic);
+playBtn.addEventListener('click',togglePlay);
+prevBtn.addEventListener('click',prevMusic);
+nextBtn.addEventListener('click',nextMusic);
+loadMusic();
+
+window.addEventListener("load", () => {
+    setGreeting();
+    island.classList.add("show");
+    const name = localStorage.getItem('username');
+    if(name&&name!=='guest'){
+        showName.innerText=name;
+        modalName.innerText=name;
+        userInfo.classList.add('show');
+        island.classList.add("expand");
+        island.innerText=`欢迎回来，${name}~`;
+        adaptIslandWidth(island.innerText);
+        setTimeout(showDateTime,3000);
+    }else{
+        showName.innerText='guest';
+        modalName.innerText='guest';
+        userInfo.classList.add('show');
+        if(!skipLogin){
             showLoginUI();
-        } else {
-            userModal.classList.add('show');
-        }
-    };
-
-    userModal.onclick = (e) => {
-        e.stopPropagation();
-    };
-
-    document.body.onclick = () => {
-        userModal.classList.remove('show');
-    };
-
-    logoutBtn.onclick = () => {
-        localStorage.setItem('username', 'guest');
-        localStorage.setItem('skipLogin', 'true');
-        showName.innerText = 'guest';
-        modalName.innerText = 'guest';
-        userModal.classList.remove('show');
-        
-        island.classList.remove('login-mode', 'time-mode');
-        island.classList.add('expand');
-        const logoutTxt = '已退出登录';
-        island.innerText = logoutTxt;
-        adaptIslandWidth(logoutTxt);
-        
-        setTimeout(() => {
-            showDateTime();
-        }, 2000);
-    };
-
-    window.addEventListener("load", () => {
-        setGreeting();
-        island.classList.add("show");
-
-        const name = localStorage.getItem('username');
-        if (name && name !== 'guest') {
-            showName.innerText = name;
-            modalName.innerText = name;
-            userInfo.classList.add('show');
+        }else{
             island.classList.add("expand");
-            const backTxt = `欢迎回来，${name}~`;
-            island.innerText = backTxt;
-            adaptIslandWidth(backTxt);
-            setTimeout(() => {
-                showDateTime();
-            }, 3000);
-        } else {
-            showName.innerText = 'guest';
-            modalName.innerText = 'guest';
-            userInfo.classList.add('show');
-            
-            if (!skipLogin) {
-                showLoginUI();
-            } else {
-                island.classList.add("expand");
-                island.innerText = '欢迎访问';
-                adaptIslandWidth('欢迎访问');
-                setTimeout(() => {
-                    showDateTime();
-                }, 3000);
-            }
+            island.innerText='欢迎访问';
+            adaptIslandWidth('欢迎访问');
+            setTimeout(showDateTime,3000);
         }
-
-        setInterval(() => {
-            if (island.innerText.includes(":") && !island.classList.contains('login-mode')) {
-                const now = new Date();
-                const date = now.getFullYear() + "-" + String(now.getMonth()+1).padStart(2,'0') + "-" + String(now.getDate()).padStart(2,'0');
-                const time = String(now.getHours()).padStart(2,'0') + ":" + String(now.getMinutes()).padStart(2,'0') + ":" + String(now.getSeconds()).padStart(2,'0');
-                const timeStr = `${date} ${time}`;
-                island.innerText = timeStr;
-                adaptIslandWidth(timeStr);
-            }
-        }, 1000);
-    });
+    }
+    setInterval(()=>{
+        if(island.innerHTML.includes(':')&&!island.classList.contains('login-mode')){
+            const now=new Date();
+            const yy=String(now.getFullYear()).slice(-2);
+            const mm=String(now.getMonth()+1).padStart(2,'0');
+            const dd=String(now.getDate()).padStart(2,'0');
+            const hh=String(now.getHours()).padStart(2,'0');
+            const mi=String(now.getMinutes()).padStart(2,'0');
+            const ss=String(now.getSeconds()).padStart(2,'0');
+            island.innerHTML=`<i class="fa-solid fa-calendar-days"></i> ${yy}-${mm}-${dd} · <i class="fa-solid fa-clock"></i> ${hh}:${mi}:${ss}`;
+        }
+    },1000);
+});
 </script>
 
 </body>
