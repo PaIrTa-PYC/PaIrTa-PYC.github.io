@@ -48,6 +48,16 @@
             transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
         }
 
+        /* 顶部用户栏容器：两个气泡并排 */
+        .user-top-wrap {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 99999;
+        }
+
         .dynamic-island {
             position: fixed;
             top: 20px;
@@ -137,21 +147,17 @@
             opacity: 1;
         }
         .username-input:focus {
-            background: rgba(255,255,255,0.3);
+            background: rgba(255,255,255,0.28);
         }
         .username-input::placeholder {
             color: rgba(255,255,255,0.7);
         }
 
         .user-info {
-            position: fixed;
-            top: 20px;
-            left: 20px;
             height: 46px;
             display: flex;
             align-items: center;
             gap: 10px;
-            z-index: 99999;
             background: var(--glass);
             backdrop-filter: blur(12px);
             border: 1px solid var(--glass-border);
@@ -160,17 +166,57 @@
             font-size: 15px;
             color: #fff;
             opacity: 0;
+            transform: translateY(-8px);
             transition: all 0.5s ease, transform 0.3s ease;
             cursor: pointer;
         }
         .user-info.show {
             opacity: 1;
+            transform: translateY(0);
         }
         .user-info:hover {
             transform: translateY(-5px);
         }
         .user-info i {
             font-size: 18px;
+        }
+
+        /* 状态气泡：和用户气泡样式完全对齐 */
+        .status-bubble {
+            height: 46px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 23px;
+            padding: 0 14px;
+            font-size: 14px;
+            color: #fff;
+            opacity: 0;
+            transform: translateY(-8px);
+            transition: all 0.5s ease, transform 0.3s ease;
+            pointer-events: none;
+        }
+        .status-bubble.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .status-bubble:hover {
+            transform: translateY(-5px);
+        }
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .status-dot.online {
+            background: #4ade80; /* 在线绿 */
+        }
+        .status-dot.offline {
+            background: #f87171; /* 离线红 */
         }
 
         .user-modal {
@@ -572,16 +618,59 @@
             transition: width 0.1s linear;
             width: 0%;
         }
+
+        @media (max-width: 1200px) {
+            .left-wrap,
+            .right-wrap {
+                display: none;
+            }
+            .container {
+                margin-left: auto;
+                margin-right: auto;
+                max-width: 1000px;
+            }
+            .music-player {
+                right: 20px;
+                left: 20px;
+                width: auto;
+            }
+        }
+
+        @media (max-width: 700px) {
+            .dynamic-island {
+                width: min(90vw, 420px);
+            }
+            .mini-island {
+                display: none;
+            }
+            .user-top-wrap {
+                left: 20px;
+                right: 20px;
+                justify-content: flex-start;
+            }
+            .user-info {
+                max-width: 48vw;
+            }
+            .download-card.expand {
+                width: min(92vw, 420px);
+            }
+        }
     </style>
 </head>
 <body>
 
-<div class="dynamic-island" id="visitText">欢迎~加载中...</div>
-
-<div class="user-info" id="userInfo">
-    <i class="fa-solid fa-user"></i>
-    <span id="showName"></span>
+<div class="user-top-wrap">
+    <div class="user-info" id="userInfo">
+        <i class="fa-solid fa-user"></i>
+        <span id="showName"></span>
+    </div>
+    <div class="status-bubble" id="statusBubble">
+        <span class="status-dot online" id="statusDot"></span>
+        <span id="statusText">在线</span>
+    </div>
 </div>
+
+<div class="dynamic-island" id="visitText">欢迎~加载中...</div>
 
 <div class="user-modal" id="userModal">
     <div class="icon"><i class="fa-solid fa-user"></i></div>
@@ -607,7 +696,6 @@
     </div>
 </div>
 
-<!-- 音乐播放器 -->
 <div class="music-player">
     <div class="music-main">
         <div class="music-controls">
@@ -627,7 +715,7 @@
         <div class="progress-time" id="totalTime">0:00</div>
     </div>
 </div>
-<audio id="audioPlayer"></audio> <!-- 这次补了闭合标签！ -->
+<audio id="audioPlayer"></audio>
 
 <div class="container">
     <div class="dev-card">
@@ -680,6 +768,9 @@ Object.defineProperty(window,'devtoolsOpen',{get(){location.reload();}});
 
 const island = document.getElementById("visitText");
 const userInfo = document.getElementById("userInfo");
+const statusBubble = document.getElementById("statusBubble");
+const statusDot = document.getElementById("statusDot");
+const statusText = document.getElementById("statusText");
 const showName = document.getElementById("showName");
 const userModal = document.getElementById("userModal");
 const modalName = document.getElementById("modalName");
@@ -751,6 +842,7 @@ function showLoginUI() {
             showName.innerText=name;
             modalName.innerText=name;
             userInfo.classList.add('show');
+            statusBubble.classList.add('show');
             island.classList.remove('login-mode','login-mode-active');
             island.classList.add('expand');
             island.innerText=`欢迎，${name}~`;
@@ -899,6 +991,7 @@ window.addEventListener("load", () => {
         showName.innerText=name;
         modalName.innerText=name;
         userInfo.classList.add('show');
+        statusBubble.classList.add('show');
         island.classList.add("expand");
         island.innerText=`欢迎回来，${name}~`;
         adaptIslandWidth(island.innerText);
@@ -907,6 +1000,7 @@ window.addEventListener("load", () => {
         showName.innerText='guest';
         modalName.innerText='guest';
         userInfo.classList.add('show');
+        statusBubble.classList.add('show');
         if(!skipLogin){
             showLoginUI();
         }else{
