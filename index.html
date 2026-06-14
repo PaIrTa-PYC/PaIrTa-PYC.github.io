@@ -19,6 +19,7 @@
 
         :root {
             --glass: rgba(255, 255, 255, 0.15);
+            --glass-hover: rgba(255, 255, 255, 0.25);
             --glass-border: rgba(255, 255, 255, 0.2);
             --text: #fff;
             --accent: #9cc9ff;
@@ -30,6 +31,7 @@
 
         [dark] {
             --glass: rgba(20, 30, 50, 0.4);
+            --glass-hover: rgba(20, 30, 50, 0.55);
             --glass-border: rgba(255, 255, 255, 0.15);
             --text: #ffffff;
             --accent: #70a1ff;
@@ -48,6 +50,11 @@
             transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
         }
 
+        /* 封禁时隐藏body滚动 */
+        body.ban-active {
+            overflow: hidden;
+        }
+
         /* 顶部用户栏容器：两个气泡并排 */
         .user-top-wrap {
             position: fixed;
@@ -56,6 +63,29 @@
             display: flex;
             gap: 10px;
             z-index: 99999;
+        }
+
+        /* ZEN 气泡 */
+        .zen-bubble {
+            position: fixed;
+            bottom: 90px;
+            right: 20px;
+            height: 46px;
+            padding: 0 20px;
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 23px;
+            font-size: 15px;
+            color: #fff;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            z-index: 99998;
+            display: flex;
+            align-items: center;
+        }
+        .zen-bubble:hover {
+            background: var(--glass-hover);
         }
 
         .dynamic-island {
@@ -167,7 +197,7 @@
             color: #fff;
             opacity: 0;
             transform: translateY(-8px);
-            transition: all 0.5s ease, transform 0.3s ease;
+            transition: all 0.5s ease, background 0.3s ease;
             cursor: pointer;
         }
         .user-info.show {
@@ -175,13 +205,13 @@
             transform: translateY(0);
         }
         .user-info:hover {
-            transform: translateY(-5px);
+            background: var(--glass-hover);
         }
         .user-info i {
             font-size: 18px;
         }
 
-        /* 状态气泡：和用户气泡样式完全对齐 */
+        /* 状态气泡 - 悬停变色 */
         .status-bubble {
             height: 46px;
             display: flex;
@@ -196,15 +226,16 @@
             color: #fff;
             opacity: 0;
             transform: translateY(-8px);
-            transition: all 0.5s ease, transform 0.3s ease;
-            pointer-events: none;
+            transition: all 0.5s ease, background 0.3s ease;
+            pointer-events: auto;
+            cursor: pointer;
         }
         .status-bubble.show {
             opacity: 1;
             transform: translateY(0);
         }
         .status-bubble:hover {
-            transform: translateY(-5px);
+            background: var(--glass-hover);
         }
         .status-dot {
             width: 8px;
@@ -213,10 +244,10 @@
             flex-shrink: 0;
         }
         .status-dot.online {
-            background: #4ade80; /* 在线绿 */
+            background: #4ade80;
         }
         .status-dot.offline {
-            background: #f87171; /* 离线红 */
+            background: #f87171;
         }
 
         .user-modal {
@@ -257,7 +288,7 @@
             border-radius: 12px;
             cursor: pointer;
             font-size: 15px;
-            transition: 0.3s;
+            transition: background 0.3s ease;
         }
         .logout-btn:hover {
             background: rgba(255,255,255,0.25);
@@ -280,10 +311,10 @@
             backdrop-filter: blur(12px);
             border: 1px solid var(--glass-border);
             color: #fff;
-            transition: all 0.3s ease;
+            transition: background 0.3s ease;
         }
         .theme-toggle:hover {
-            transform: translateY(-5px);
+            background: var(--glass-hover);
         }
 
         .left-wrap {
@@ -319,11 +350,10 @@
             font-size: 16px;
             color: #fff;
             background: rgba(255,255,255,0.05);
-            transition: all 0.3s ease;
+            transition: background 0.3s ease;
         }
         .nav-item:hover {
-            background: rgba(255,255,255,0.15);
-            transform: translateY(-3px);
+            background: rgba(255,255,255,0.2);
         }
         .nav-item.active {
             background: rgba(255,255,255,0.2);
@@ -510,7 +540,7 @@
             font-size: 15px;
             text-align: center;
             text-decoration: none;
-            transition: all 0.3s ease;
+            transition: background 0.3s ease;
         }
         .down-btn:hover {
             background: #0D47A1;
@@ -524,10 +554,70 @@
             font-size: 15px;
             text-align: center;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: background 0.3s ease;
         }
         .close-card-btn:hover {
             background: rgba(80,80,80,0.8);
+        }
+
+        /* 小工具页面样式 */
+        .tool-card { display: none; }
+        .tool-card.show { display: block; }
+        .tool-main-card {
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 80px 40px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        .tool-main-card:hover {
+            transform: translateY(-5px);
+        }
+        .tool-input-group {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 30px;
+        }
+        .tool-input-small {
+            width: 140px;
+            height: 44px;
+            border-radius: 22px;
+            background: rgba(255,255,255,0.2);
+            color: #fff;
+            text-align: center;
+            font-size: 18px;
+            padding: 0 15px;
+            transition: all 0.3s ease;
+        }
+        .tool-input-small:focus {
+            background: rgba(255,255,255,0.3);
+        }
+        .tool-middle-text {
+            font-size: 18px;
+            color: #fff;
+        }
+        .verify-btn {
+            padding: 12px 40px;
+            border-radius: 12px;
+            background: #1E88E5;
+            color: #fff;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            margin-bottom: 30px;
+        }
+        .verify-btn:hover {
+            background: #0D47A1;
+        }
+        .verify-result {
+            font-size: 28px;
+            color: var(--accent);
+            font-weight: 600;
+            min-height: 35px;
         }
 
         .music-player {
@@ -539,8 +629,6 @@
             backdrop-filter: blur(15px);
             border: 1px solid var(--glass-border);
             border-radius: 16px;
-            display: flex;
-            flex-direction: column;
             padding: 12px 15px;
             gap: 8px;
             z-index: 999;
@@ -570,11 +658,10 @@
             color: #fff;
             font-size: 15px;
             cursor: pointer;
-            transition: 0.3s;
+            transition: background 0.3s ease;
         }
         .music-btn:hover {
-            background: rgba(255,255,255,0.25);
-            transform: scale(1.1);
+            background: rgba(255,255,255,0.3);
         }
         .music-info {
             flex: 1;
@@ -619,6 +706,92 @@
             width: 0%;
         }
 
+        /* ZEN 弹窗遮罩 */
+        .zen-mask {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.85);
+            z-index: 999999;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 30px;
+            overflow: hidden;
+        }
+        .zen-mask.show {
+            display: flex;
+        }
+        .zen-question {
+            font-size: 36px;
+            color: #fff;
+            font-weight: bold;
+        }
+        .zen-yes-btn {
+            padding: 14px 50px;
+            border-radius: 12px;
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            color: #fff;
+            font-size: 18px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+        .zen-yes-btn:hover {
+            background: var(--glass-hover);
+        }
+
+        /* 封禁全屏页面 */
+        .ban-fullscreen {
+            position: fixed;
+            inset: 0;
+            background: url('data/Dirt_background_JE2.png') center/cover no-repeat;
+            z-index: 9999999;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            padding: 20px;
+            text-align: center;
+            overflow: hidden;
+        }
+        .ban-fullscreen.show {
+            display: flex;
+        }
+        .ban-text {
+            font-size: 24px;
+            color: #ffffff;
+        }
+        .text-yellow {
+            color: #ffd000;
+        }
+        .text-red {
+            color: #ff4444;
+            font-size: 26px;
+        }
+        .appeal-input {
+            width: 280px;
+            height: 40px;
+            border-radius: 20px;
+            background: rgba(255,255,255,0.2);
+            color: #fff;
+            text-align: center;
+            font-size: 15px;
+            padding: 0 15px;
+            margin-top: 8px;
+        }
+        .appeal-input::placeholder {
+            color: rgba(255,255,255,0.7);
+        }
+        .appeal-error {
+            font-size: 14px;
+            color: #ff4444;
+            margin-top: 4px;
+            min-height: 18px;
+        }
+
         @media (max-width: 1200px) {
             .left-wrap,
             .right-wrap {
@@ -654,6 +827,13 @@
             .download-card.expand {
                 width: min(92vw, 420px);
             }
+            .tool-input-group {
+                flex-direction: column;
+                gap: 10px;
+            }
+            .zen-bubble {
+                bottom: 80px;
+            }
         }
     </style>
 </head>
@@ -670,6 +850,9 @@
     </div>
 </div>
 
+<!-- ZEN 气泡 -->
+<div class="zen-bubble" id="zenBubble">注入ZEN</div>
+
 <div class="dynamic-island" id="visitText">欢迎~加载中...</div>
 
 <div class="user-modal" id="userModal">
@@ -684,6 +867,7 @@
     <div class="nav-card glass-card">
         <div class="nav-item active" data-page="home">主页</div>
         <div class="nav-item" data-page="download">下载</div>
+        <div class="nav-item" data-page="tool">小工具</div>
     </div>
 </div>
 
@@ -694,6 +878,22 @@
         <div class="notice-title">公告</div>
         <div class="notice-desc">当前开发时间仓促，暂无时间适配手机，预计过几个月再适配。在此期间，手机可以通过工具箱 -> 访问电脑版/桌面模式 来访问。</div>
     </div>
+</div>
+
+<!-- ZEN 确认遮罩 -->
+<div class="zen-mask" id="zenMask">
+    <div class="zen-question">注入ZEN？此操作不可取消！</div>
+    <button class="zen-yes-btn" id="zenYesBtn">是</button>
+</div>
+
+<!-- 封禁全屏页面 -->
+<div class="ban-fullscreen" id="banScreen">
+    <div class="ban-text">连接已丢失</div>
+    <div class="ban-text">你因<span class="text-yellow"> 作弊 </span>被封禁<span class="text-yellow"> 30 </span>天</div>
+    <div class="ban-text" id="remainTime">剩余时间：计算中...</div>
+    <div class="ban-text text-red">如有疑问，请进行申诉</div>
+    <input type="text" class="appeal-input" id="appealInput" placeholder="输入申诉后获得的密钥">
+    <div class="appeal-error" id="appealError"></div>
 </div>
 
 <div class="music-player">
@@ -730,6 +930,19 @@
         </div>
     </div>
 
+    <div class="tool-card" id="toolCard">
+        <div class="tool-main-card">
+            <div class="tool-input-group">
+                <input type="text" class="tool-input-small" id="leftInput" value="TJF">
+                <span class="tool-middle-text">是不是</span>
+                <input type="text" class="tool-input-small" id="rightInput" value="gay">
+            </div>
+            <br>
+            <button class="verify-btn" id="verifyBtn">验证</button>
+            <div class="verify-result" id="verifyResult"></div>
+        </div>
+    </div>
+
     <div class="content-wrapper" id="content">
         <div class="header-card main-card">
             <img src="data/1.jpg" class="avatar">
@@ -745,7 +958,7 @@
             <p>我是 PaIrTa_PYC？</p>
         </div>
         <div class="content-card main-card">
-            <h2>我的技能</h2>
+            <h2>技术栈</h2>
             <div class="skills"><span class="tag">C++</span></div>
         </div>
         <div class="content-card main-card">
@@ -780,12 +993,95 @@ const greetText = document.getElementById("greetText");
 const navItems = document.querySelectorAll('.nav-item');
 const content = document.getElementById('content');
 const devCard = document.querySelector('.dev-card');
+const toolCard = document.getElementById('toolCard');
 const dcard = document.getElementById('dcard');
 const closeCardBtn = document.querySelector('.close-card-btn');
+const leftInput = document.getElementById('leftInput');
+const rightInput = document.getElementById('rightInput');
+const verifyBtn = document.getElementById('verifyBtn');
+const verifyResult = document.getElementById('verifyResult');
+const zenBubble = document.getElementById('zenBubble');
+const zenMask = document.getElementById('zenMask');
+const zenYesBtn = document.getElementById('zenYesBtn');
+const banScreen = document.getElementById('banScreen');
+const remainTime = document.getElementById('remainTime');
+const appealInput = document.getElementById('appealInput');
+const appealError = document.getElementById('appealError');
+
 let islandTimer = null;
+let isOnline = true;
+const BAN_TOTAL_SEC = 30 * 24 * 60 * 60; // 30天总秒数
+const CORRECT_KEY = "917813"; // 正确的申诉密钥
+let banStartTime = 0;
+let banTimer = null;
 
 const savedName = localStorage.getItem('username');
 const skipLogin = localStorage.getItem('skipLogin');
+
+// 在线状态自动检测
+function updateOnlineStatus() {
+    isOnline = Math.random() > 0.3;
+    if(isOnline) {
+        statusDot.className = 'status-dot online';
+        statusText.textContent = '在线';
+    } else {
+        statusDot.className = 'status-dot offline';
+        statusText.textContent = '离线';
+    }
+}
+setInterval(updateOnlineStatus, 30000);
+
+// 格式化时间：秒 -> XX天XX小时XX分钟XX秒
+function formatTimeDiff(sec) {
+    if(sec <= 0) return "0天0小时0分钟0秒";
+    let d = Math.floor(sec / (24 * 3600));
+    let h = Math.floor((sec % (24 * 3600)) / 3600);
+    let m = Math.floor((sec % 3600) / 60);
+    let s = Math.floor(sec % 60);
+    return `${d}天${h}小时${m}分钟${s}秒`;
+}
+
+// 更新剩余封禁时间
+function updateRemainTime() {
+    if(!banStartTime) return;
+    const now = Math.floor(Date.now() / 1000);
+    const pass = now - banStartTime;
+    const remain = Math.max(0, BAN_TOTAL_SEC - pass);
+    remainTime.innerText = "剩余时间：" + formatTimeDiff(remain);
+    if(remain <= 0) {
+        clearInterval(banTimer);
+        banScreen.classList.remove('show');
+        document.body.classList.remove('ban-active');
+        document.exitFullscreen().catch(e=>{});
+        banStartTime = 0;
+    }
+}
+
+// 申诉密钥验证
+function checkAppealKey() {
+    const inputKey = appealInput.value.trim();
+    if(inputKey === CORRECT_KEY) {
+        // 密钥正确，解除封禁
+        clearInterval(banTimer);
+        banScreen.classList.remove('show');
+        document.body.classList.remove('ban-active');
+        document.exitFullscreen().catch(e=>{});
+        localStorage.removeItem('banStartTime');
+        banStartTime = 0;
+        appealInput.value = '';
+        appealError.innerText = '';
+    } else {
+        // 密钥错误
+        appealError.innerText = '密钥不正确';
+    }
+}
+
+// 申诉输入框回车事件
+appealInput.addEventListener('keydown', e => {
+    if(e.key === 'Enter') {
+        checkAppealKey();
+    }
+});
 
 function adaptIslandWidth(text){
     const len = text.length;
@@ -881,13 +1177,49 @@ document.addEventListener('click',e=>{
     if(!dcard.contains(e.target))dcard.classList.remove('expand');
 });
 
+// 验证按钮
+verifyBtn.onclick = () => {
+    const isMatch = Math.random() > 0.5;
+    verifyResult.textContent = isMatch ? '是' : '不是';
+};
+leftInput.addEventListener('keydown', e => {
+    if(e.key === 'Enter') verifyBtn.click();
+});
+rightInput.addEventListener('keydown', e => {
+    if(e.key === 'Enter') verifyBtn.click();
+});
+
+// ZEN 气泡点击
+zenBubble.onclick = () => {
+    zenMask.classList.add('show');
+};
+// 点击 是
+zenYesBtn.onclick = async () => {
+    zenMask.classList.remove('show');
+    // 进入全屏
+    try {
+        await document.documentElement.requestFullscreen();
+    } catch(e) {}
+    // 标记封禁状态
+    document.body.classList.add('ban-active');
+    // 等待2秒显示封禁页面
+    setTimeout(() => {
+        banStartTime = Math.floor(Date.now() / 1000);
+        banScreen.classList.add('show');
+        updateRemainTime();
+        banTimer = setInterval(updateRemainTime, 1000);
+    }, 2000);
+};
+
 navItems.forEach(item=>{
     item.onclick=()=>{
         navItems.forEach(i=>i.classList.remove('active'));
         item.classList.add('active');
-        content.classList.toggle('hide',item.dataset.page==='download');
-        devCard.classList.toggle('show',item.dataset.page==='download');
+        content.classList.toggle('hide', item.dataset.page !== 'home');
+        devCard.classList.toggle('show', item.dataset.page === 'download');
+        toolCard.classList.toggle('show', item.dataset.page === 'tool');
         if(item.dataset.page!=='download')dcard.classList.remove('expand');
+        if(item.dataset.page === 'tool') verifyResult.textContent = '';
     };
 });
 
@@ -913,6 +1245,7 @@ logoutBtn.onclick=()=>{
     setTimeout(showDateTime,2000);
 };
 
+// 音乐
 const audioPlayer = document.getElementById('audioPlayer');
 const playBtn = document.getElementById('playBtn');
 const prevBtn = document.getElementById('prevBtn');
@@ -984,6 +1317,30 @@ nextBtn.addEventListener('click',nextMusic);
 loadMusic();
 
 window.addEventListener("load", () => {
+    // 检查是否已经在封禁状态
+    const savedBanStart = localStorage.getItem('banStartTime');
+    if(savedBanStart) {
+        banStartTime = parseInt(savedBanStart);
+        const now = Math.floor(Date.now() / 1000);
+        const pass = now - banStartTime;
+        const remain = BAN_TOTAL_SEC - pass;
+        if(remain > 0) {
+            // 已经在封禁中，自动进入全屏
+            document.body.classList.add('ban-active');
+            try {
+                document.documentElement.requestFullscreen();
+            } catch(e) {}
+            banScreen.classList.add('show');
+            updateRemainTime();
+            banTimer = setInterval(updateRemainTime, 1000);
+            return;
+        } else {
+            // 封禁结束，清除
+            localStorage.removeItem('banStartTime');
+            banStartTime = 0;
+        }
+    }
+
     setGreeting();
     island.classList.add("show");
     const name = localStorage.getItem('username');
@@ -1022,6 +1379,13 @@ window.addEventListener("load", () => {
             island.innerHTML=`<i class="fa-solid fa-calendar-days"></i> ${yy}-${mm}-${dd} · <i class="fa-solid fa-clock"></i> ${hh}:${mi}:${ss}`;
         }
     },1000);
+
+    // 保存封禁开始时间到localStorage，刷新后也能继续
+    setInterval(()=>{
+        if(banStartTime) {
+            localStorage.setItem('banStartTime', banStartTime.toString());
+        }
+    }, 1000);
 });
 </script>
 
