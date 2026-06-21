@@ -472,92 +472,81 @@
             transform: translateY(-5px);
         }
 
+        /* 新的下载页面样式 */
         .dev-card { display: none; }
         .dev-card.show { display: block; }
-        .download-card {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            width: 240px;
-            height: 280px;
-            border-radius: 20px;
+        .download-page-card {
             background: var(--glass);
             backdrop-filter: blur(12px);
             border: 1px solid var(--glass-border);
-            padding: 25px;
+            border-radius: 24px;
+            padding: 40px;
+            display: flex;
+            gap: 40px;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+        .download-page-card:hover {
+            transform: translateY(-5px);
+        }
+        .download-preview {
+            flex-shrink: 0;
+        }
+        .download-preview-img {
+            width: 280px;
+            height: 280px;
+            border-radius: 16px;
+            object-fit: cover;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .download-info {
+            flex: 1;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            cursor: pointer;
-            transition: all 0.4s ease;
-            z-index: 10;
+            gap: 20px;
         }
-        .download-card:hover { transform: translateY(-5px); }
-        .download-card.expand {
-            width: 420px;
-            height: 480px;
-            top: 25%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: var(--glass);
-            border-color: var(--glass-border);
-            backdrop-filter: blur(20px);
+        .download-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: #fff;
         }
-        .download-card-img {
-            width: 120px;
-            height: 120px;
-            border-radius: 14px;
-            object-fit: cover;
-            margin-bottom: 15px;
-            transition: all 0.4s ease;
+        .download-desc {
+            font-size: 16px;
+            color: #eee;
+            line-height: 1.8;
         }
-        .download-card.expand .download-card-img { width: 180px; height: 180px; }
-        .download-card-title { font-size: 17px; color: #ffffff; font-weight: 600; margin-bottom: 8px; }
-        .download-card-desc { font-size: 13px; color: #eee; line-height: 1.4; }
-        
-        .btn-group {
-            position: absolute;
-            left: 25px;
-            right: 25px;
-            bottom: 25px;
+        .download-meta {
             display: flex;
-            gap: 10px;
-            opacity: 0;
-            pointer-events: none;
-            transition: 0.3s;
+            gap: 20px;
         }
-        .download-card.expand .btn-group {
-            opacity: 1;
-            pointer-events: auto;
+        .download-meta span {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: var(--blue-text);
+            background: var(--tag);
+            padding: 8px 16px;
+            border-radius: 20px;
         }
-        
-        .down-btn {
-            flex: 1;
-            padding: 10px 0;
+        .download-main-btn {
+            align-self: flex-start;
+            padding: 16px 40px;
             border-radius: 12px;
             background: #1E88E5;
             color: #fff;
-            font-size: 15px;
-            text-align: center;
+            font-size: 18px;
+            font-weight: 600;
             text-decoration: none;
-            transition: background 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s ease;
         }
-        .down-btn:hover {
+        .download-main-btn:hover {
             background: #0D47A1;
-        }
-        .close-card-btn {
-            flex: 1;
-            padding: 10px 0;
-            border-radius: 12px;
-            background: rgba(102,102,102,0.6);
-            color: #fff;
-            font-size: 15px;
-            text-align: center;
-            cursor: pointer;
-            transition: background 0.3s ease;
-        }
-        .close-card-btn:hover {
-            background: rgba(80,80,80,0.8);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(30, 136, 229, 0.4);
         }
 
         /* 小工具页面样式 */
@@ -706,21 +695,26 @@
             width: 0%;
         }
 
-        /* ZEN 弹窗遮罩 */
+        /* ZEN 弹窗遮罩 - 渐变出现+红色边框 */
         .zen-mask {
             position: fixed;
             inset: 0;
             background: rgba(0,0,0,0.85);
+            border: 4px solid #ff4444;
             z-index: 999999;
-            display: none;
+            opacity: 0;
+            pointer-events: none;
+            display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             gap: 30px;
             overflow: hidden;
+            transition: opacity 0.5s ease;
         }
         .zen-mask.show {
-            display: flex;
+            opacity: 1;
+            pointer-events: auto;
         }
         .zen-question {
             font-size: 36px;
@@ -807,6 +801,16 @@
                 left: 20px;
                 width: auto;
             }
+            .download-page-card {
+                flex-direction: column;
+                text-align: center;
+            }
+            .download-meta {
+                justify-content: center;
+            }
+            .download-main-btn {
+                align-self: center;
+            }
         }
 
         @media (max-width: 700px) {
@@ -824,15 +828,16 @@
             .user-info {
                 max-width: 48vw;
             }
-            .download-card.expand {
-                width: min(92vw, 420px);
-            }
             .tool-input-group {
                 flex-direction: column;
                 gap: 10px;
             }
             .zen-bubble {
                 bottom: 80px;
+            }
+            .download-preview-img {
+                width: 220px;
+                height: 220px;
             }
         }
     </style>
@@ -851,7 +856,7 @@
 </div>
 
 <!-- ZEN 气泡 -->
-<div class="zen-bubble" id="zenBubble">注入ZEN</div>
+<div class="zen-bubble" id="zenBubble">ZEN</div>
 
 <div class="dynamic-island" id="visitText">欢迎~加载中...</div>
 
@@ -918,14 +923,22 @@
 <audio id="audioPlayer"></audio>
 
 <div class="container">
+    <!-- 新的下载页面 -->
     <div class="dev-card">
-        <div class="download-card" id="dcard">
-            <img src="download/1.jpg" class="download-card-img">
-            <div class="download-card-title">布吉岛材质包1.8</div>
-            <div class="download-card-desc">适用于 1.20.1 的我的世界布吉岛服务器材质包</div>
-            <div class="btn-group">
-                <a href="https://pairta-pyc.lanzoub.com/isNhd32tf78f" class="down-btn" target="_blank">下载</a>
-                <div class="close-card-btn">关闭</div>
+        <div class="download-page-card">
+            <div class="download-preview">
+                <img src="download/1.jpg" class="download-preview-img">
+            </div>
+            <div class="download-info">
+                <h2 class="download-title">布吉岛材质包1.8</h2>
+                <p class="download-desc">适用于 1.20.1 的我的世界布吉岛服务器材质包，安装后可以获得更好的游戏体验，适配服务器的所有方块和物品，让你的游戏画面更加清爽美观。</p>
+                <div class="download-meta">
+                    <span><i class="fa-solid fa-file-archive"></i> 材质包</span>
+                    <span><i class="fa-solid fa-gamepad"></i> 我的世界</span>
+                </div>
+                <a href="https://pairta-pyc.lanzoub.com/isNhd32tf78f" class="download-main-btn" target="_blank">
+                    <i class="fa-solid fa-download"></i> 立即下载
+                </a>
             </div>
         </div>
     </div>
@@ -933,9 +946,9 @@
     <div class="tool-card" id="toolCard">
         <div class="tool-main-card">
             <div class="tool-input-group">
-                <input type="text" class="tool-input-small" id="leftInput" value="TJF">
+                <input type="text" class="tool-input-small" id="leftInput" value="你">
                 <span class="tool-middle-text">是不是</span>
-                <input type="text" class="tool-input-small" id="rightInput" value="gay">
+                <input type="text" class="tool-input-small" id="rightInput" value="PaIrTa_PYC">
             </div>
             <br>
             <button class="verify-btn" id="verifyBtn">验证</button>
@@ -994,8 +1007,6 @@ const navItems = document.querySelectorAll('.nav-item');
 const content = document.getElementById('content');
 const devCard = document.querySelector('.dev-card');
 const toolCard = document.getElementById('toolCard');
-const dcard = document.getElementById('dcard');
-const closeCardBtn = document.querySelector('.close-card-btn');
 const leftInput = document.getElementById('leftInput');
 const rightInput = document.getElementById('rightInput');
 const verifyBtn = document.getElementById('verifyBtn');
@@ -1165,18 +1176,6 @@ themeBtn.onclick = () => {
     setTimeout(showDateTime,2000);
 };
 
-dcard.onclick = e=>{
-    if(e.target.closest('.down-btn')||e.target.closest('.close-card-btn'))return;
-    dcard.classList.add('expand');
-};
-closeCardBtn.onclick = e=>{
-    e.stopPropagation();
-    dcard.classList.remove('expand');
-};
-document.addEventListener('click',e=>{
-    if(!dcard.contains(e.target))dcard.classList.remove('expand');
-});
-
 // 验证按钮
 verifyBtn.onclick = () => {
     const isMatch = Math.random() > 0.5;
@@ -1218,7 +1217,6 @@ navItems.forEach(item=>{
         content.classList.toggle('hide', item.dataset.page !== 'home');
         devCard.classList.toggle('show', item.dataset.page === 'download');
         toolCard.classList.toggle('show', item.dataset.page === 'tool');
-        if(item.dataset.page!=='download')dcard.classList.remove('expand');
         if(item.dataset.page === 'tool') verifyResult.textContent = '';
     };
 });
