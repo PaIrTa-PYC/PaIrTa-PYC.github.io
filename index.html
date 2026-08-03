@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TextDB 文本存储工具</title>
+    <title>文本存储工具</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script>
@@ -83,7 +83,7 @@
                     class="w-full px-4 py-3 border border-gray-200 rounded-xl input-focus transition-all duration-200 bg-white/50"
                     value="123456"
                 >
-                <p class="text-xs text-gray-500 mt-1">请不要修改此处，可能导致数据不保存！我们会尽快修复</p>
+                <p class="text-xs text-gray-500 mt-1">这个Key将用于唯一标识你的数据</p>
             </div>
 
             <!-- Text Area -->
@@ -210,8 +210,8 @@
                 return;
             }
             
-            if (!value) {
-                showStatus('请输入要保存的内容', 'warning');
+            if (!value || value.trim() === '') {
+                showStatus('错误的长度：内容不能为空', 'error');
                 return;
             }
             
@@ -256,7 +256,7 @@
                     charCount.textContent = data.length;
                     showStatus('数据读取成功！', 'success');
                 } else if (response.status === 404) {
-                    showStatus('未找到该数据，Key 可能不存在', 'warning');
+                    showStatus('无效的Key', 'error');
                     document.getElementById('textInput').value = '';
                     charCount.textContent = '0';
                 } else {
