@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TextDB 文本存储工具</title>
+    <title>神人存储工具</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script>
@@ -60,8 +60,8 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path>
                 </svg>
             </div>
-            <h1 class="text-3xl font-bold text-white mb-2">TextDB 文本存储工具</h1>
-            <p class="text-white/80">简单高效的在线文本存储服务</p>
+            <h1 class="text-3xl font-bold text-white mb-2">神人文本存储工具</h1>
+            <p class="text-white/80">用了变神人</p>
         </div>
 
         <!-- Main Card -->
@@ -80,7 +80,7 @@
                     <input 
                         type="text" 
                         id="keyInput" 
-                        placeholder="输入你的数据标识，例如：my-note-123"
+                        placeholder="输入你的数据标识，例如：WormwakerLLL"
                         class="flex-1 px-4 py-3 border border-gray-200 rounded-xl input-focus transition-all duration-200 bg-white/50"
                         value="123456"
                     >
@@ -91,7 +91,7 @@
                         随机生成
                     </button>
                 </div>
-                <p class="text-xs text-gray-500 mt-1">这个Key将用于唯一标识你的数据，随机生成可提高安全性</p>
+                <p class="text-xs text-gray-500 mt-1">这个Key将用于唯一标识你的数据</p>
             </div>
 
             <!-- Text Area -->
@@ -140,19 +140,19 @@
 
             <!-- Encryption Buttons -->
             <div class="mt-4 pt-4 border-t border-gray-200">
-                <p class="text-sm text-gray-600 mb-3">🔐 哈基米加密工具</p>
+                <p class="text-sm text-gray-600 mb-3">🔐 神人加密工具</p>
                 <div class="flex flex-wrap gap-3">
                     <button onclick="hajimiEncrypt()" class="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-lg shadow-purple-500/25 hover:shadow-xl hover:shadow-purple-500/30 transform hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-2">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
                         </svg>
-                        哈基米加密
+                        神人加密
                     </button>
                     <button onclick="hajimiDecrypt()" class="bg-gradient-to-r from-cyan-500 to-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-lg shadow-cyan-500/25 hover:shadow-xl hover:shadow-cyan-500/30 transform hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-2">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"></path>
                         </svg>
-                        哈基米解密
+                        神人解密
                     </button>
                 </div>
             </div>
@@ -238,7 +238,7 @@
             }
             
             if (!value || value.trim() === '') {
-                showStatus('错误的长度：文本内容不能为空', 'error');
+                showStatus('神人的长度：神人内容不能为空', 'error');
                 return;
             }
             
@@ -255,11 +255,11 @@
                 if (response.ok) {
                     showStatus('数据保存成功！', 'success');
                 } else {
-                    showStatus('保存失败，请稍后重试', 'error');
+                    showStatus('保存失败！', 'error');
                 }
             } catch (error) {
                 console.error('Save error:', error);
-                showStatus('网络错误，请检查网络连接', 'error');
+                showStatus('网络错误', 'error');
             }
         }
 
@@ -287,11 +287,11 @@
                     document.getElementById('textInput').value = '';
                     charCount.textContent = '0';
                 } else {
-                    showStatus('读取失败，请稍后重试', 'error');
+                    showStatus('读取失败', 'error');
                 }
             } catch (error) {
                 console.error('Load error:', error);
-                showStatus('网络错误，请检查网络连接', 'error');
+                showStatus('网络错误', 'error');
             }
         }
 
@@ -304,7 +304,7 @@
                 return;
             }
             
-            if (!confirm('确定要删除这条数据吗？此操作不可恢复。')) {
+            if (!confirm('确定要删除这条数据吗？')) {
                 return;
             }
             
@@ -374,7 +374,7 @@
                 
                 document.getElementById('textInput').value = result;
                 charCount.textContent = result.length;
-                showStatus('哈基米加密成功！', 'success');
+                showStatus('神人加密成功！', 'success');
             } catch (error) {
                 console.error('Encryption error:', error);
                 showStatus('加密失败，请重试', 'error');
@@ -392,13 +392,13 @@
             // Check if all characters are hajimi chars
             for (const c of text) {
                 if (!hajimiChars.includes(c)) {
-                    showStatus('无效的哈基米密文，包含未知字符', 'error');
+                    showStatus('无效的神人密文，包含未知字符', 'error');
                     return;
                 }
             }
             
             if (text.length % 5 !== 0) {
-                showStatus('无效的哈基米密文，长度必须是5的倍数', 'error');
+                showStatus('无效的神人密文，长度必须是5的倍数', 'error');
                 return;
             }
             
@@ -422,7 +422,7 @@
                 
                 document.getElementById('textInput').value = result;
                 charCount.textContent = result.length;
-                showStatus('哈基米解密成功！', 'success');
+                showStatus('神人解密成功！', 'success');
             } catch (error) {
                 console.error('Decryption error:', error);
                 showStatus('解密失败，密文可能已损坏', 'error');
