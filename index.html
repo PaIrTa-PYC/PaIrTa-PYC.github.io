@@ -164,8 +164,35 @@
         const bottleContent = document.getElementById('bottleContent');
         const bottleCharCount = document.getElementById('bottleCharCount');
         const yourPickCountEl = document.getElementById('yourPickCount');
+        const todayCountEl = document.getElementById('todayCount');
 
         bottleContent.addEventListener('input', () => { bottleCharCount.textContent = bottleContent.value.length; });
+
+        // Cookie helpers
+        function setCookie(name, value, days = 365) {
+            const d = new Date();
+            d.setTime(d.getTime() + (days*24*60*60*1000));
+            document.cookie = `${name}=${encodeURIComponent(value)};expires=${d.toUTCString()};path=/;SameSite=Lax`;
+        }
+        function getCookie(name) {
+            const v = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+            return v ? decodeURIComponent(v.pop()) : null;
+        }
+
+        function getReadBottles(){
+            try{
+                const c = getCookie('readBottles');
+                if(!c) return [];
+                return JSON.parse(c);
+            }catch(e){ return []; }
+        }
+        function addReadBottle(n){
+            try{
+                const arr = getReadBottles();
+                if(!arr.includes(n)) arr.push(n);
+                setCookie('readBottles', JSON.stringify(arr), 365);
+            }catch(e){}
+        }
 
         // next key index stored locally, start from 1
         function getNextIndex() { return parseInt(localStorage.getItem('nextBottleIndex') || '1', 10); }
@@ -238,33 +265,37 @@
 
         async function sendBottle(){
             const content = bottleContent.value;
+            const anonymous = document.getElementById('anonymousChk') ? document.getElementById('anonymousChk').checked : true;
+            const name = document.getElementById('senderName') ? document.getElementById('senderName').value.trim() : '';
             if(!content || content.trim()===''){ showStatus('漂流瓶不能是空的哦，写点什么吧','error'); return; }
             showStatus('正在把漂流瓶扔进大海...','info');
             try{
-                // get next index from Page Index
-                const curCount = await getPageIndex();
-                const nextIdx = curCount + 1;
+                // increment Page Index on server and get number
+                const nextIdx = await incrementPageIndex();
                 const key = `bottle-${nextIdx}`;
+                let payload = content;
+                if(!anonymous && name) payload = content + '\n\n— ' + name;
 
-                const res = await postKey(key, content);
+                const res = await postKey(key, payload);
                 if(res && (res.status===1 || res.status==='1')){
-                    // increment Page Index to reflect new count
-                    await setPageIndex(nextIdx);
-
                     bottleContent.value=''; bottleCharCount.textContent='0';
                     setNextIndex(nextIdx+1);
+                    todayCountEl.textContent = String(nextIdx);
                     showStatus('\uD83C\uDF89 漂流瓶已成功扔进大海','success');
                 }else{
+                    // if failed, roll back Page Index (best-effort)
+                    await setPageIndex(Math.max(0, (await getPageIndex()) - 1));
                     showStatus('扔漂流瓶失败，再试试吧','error');
                 }
             }catch(e){ console.error(e); showStatus('网络错误','error'); }
         }
 
-        // Pick bottle: read Page Index, then randomly pick within [1, pageIndex]
+        // Pick bottle: read Page Index, then randomly pick within [1, pageIndex] excluding already-read stored in cookie
         async function pickBottle(){
             const loadingState = document.getElementById('loadingState');
             const emptyState = document.getElementById('emptyState');
             const foundState = document.getElementById('foundState');
+            const messageMeta = document.getElementById('messageMeta');
             loadingState.classList.remove('hidden'); emptyState.classList.add('hidden'); foundState.classList.add('hidden');
 
             const pageIndex = await getPageIndex();
@@ -273,33 +304,62 @@
                 return;
             }
 
-            const attempts = Math.min(pageIndex, 100);
-            for(let i=0;i<attempts;i++){
-                const rand = Math.floor(Math.random() * pageIndex) + 1; // 1..pageIndex
-                const key = `bottle-${rand}`;
+            let candidates = [];
+            for(let i=1;i<=pageIndex;i++) candidates.push(i);
+            const read = getReadBottles();
+            candidates = candidates.filter(n => !read.includes(n));
+
+            if(candidates.length === 0){
+                loadingState.classList.add('hidden'); emptyState.classList.remove('hidden'); showStatus('你已经看过所有漂流瓶啦','info');
+                return;
+            }
+
+            // attempt up to candidates.length times
+            for(let attempt=0; attempt<Math.min(candidates.length, 200); attempt++){
+                const idx = candidates[Math.floor(Math.random()*candidates.length)];
+                const key = `bottle-${idx}`;
                 const content = await fetchTextKey(key);
                 if(content){
                     document.getElementById('bottleMessage').textContent = content;
+                    // determine sender meta
+                    let meta = '匿名';
+                    const lines = content.split('\n');
+                    const last = lines[lines.length-1];
+                    if(last && last.startsWith('— ')) meta = last.substring(2);
+                    messageMeta.textContent = '来自：' + meta;
+
                     loadingState.classList.add('hidden'); emptyState.classList.add('hidden'); foundState.classList.remove('hidden');
                     pickCount++; localStorage.setItem('pickCount', String(pickCount)); yourPickCountEl.textContent = pickCount;
-                    showStatus(`\uD83C\uDF89 你捡到了一个漂流瓶`,'success');
+
+                    // mark as read in cookie
+                    addReadBottle(idx);
                     return;
+                } else {
+                    // remove this idx from candidates if empty
+                    candidates = candidates.filter(n => n !== idx);
+                    if(candidates.length === 0) break;
                 }
-                // small delay
                 await new Promise(r=>setTimeout(r, 120));
             }
 
             loadingState.classList.add('hidden'); emptyState.classList.remove('hidden'); foundState.classList.add('hidden');
-            showStatus(`随机尝试了 ${attempts} 次，未找到非空的漂流瓶`,'warning');
+            showStatus('没有找到可用的漂流瓶，稍后再来试试','warning');
         }
 
         function throwBack(){ pickBottle(); }
 
         // init
-        document.addEventListener('DOMContentLoaded', ()=>{
+        document.addEventListener('DOMContentLoaded', async ()=>{
             // ensure next index exists
             if(!localStorage.getItem('nextBottleIndex')) localStorage.setItem('nextBottleIndex','1');
-            document.getElementById('todayCount').textContent = '???';
+            const idx = await getPageIndex();
+            todayCountEl.textContent = String(idx);
+            // ensure anonymous checkbox exists
+            const anon = document.getElementById('anonymousChk');
+            if(anon){
+                document.getElementById('senderName').disabled = anon.checked;
+                anon.addEventListener('change', (e)=>{ document.getElementById('senderName').disabled = e.target.checked; });
+            }
         });
     </script>
 </body>
