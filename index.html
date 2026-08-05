@@ -63,20 +63,18 @@
             </div>
 
             <div id="sendSection">
-                <div class="mb-6">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                        <span class="flex items-center gap-2">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                            </svg>
-                            写下你的留言
-                        </span>
-                    </label>
-                    <textarea id="bottleContent" rows="6" placeholder="写下你想说的话" class="w-full px-4 py-4 border border-gray-200 rounded-xl input-focus transition-all duration-200 resize-none bg-white/50"></textarea>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">写下你的留言</label>
+                    <textarea id="bottleContent" rows="5" placeholder="写下你想说的话" class="w-full px-4 py-3 border border-gray-200 rounded-xl input-focus transition-all duration-200 resize-none bg-white/50"></textarea>
                     <div class="flex justify-between items-center mt-1">
-                        <p class="text-xs text-gray-500">匿名发送</p>
+                        <label class="text-xs text-gray-500"><input id="anonymousChk" type="checkbox" checked class="mr-2"> 匿名</label>
                         <p class="text-xs text-gray-500"><span id="bottleCharCount">0</span> 字符</p>
                     </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">显示名字（若不匿名）</label>
+                    <input id="senderName" type="text" placeholder="你的名字（可选）" class="w-full px-4 py-2 border border-gray-200 rounded-xl input-focus bg-white/50" />
                 </div>
 
                 <button onclick="sendBottle()" class="btn-primary w-full flex items-center justify-center gap-2">
@@ -115,7 +113,7 @@
                         </div>
                         <p id="bottleMessage" class="text-gray-700 whitespace-pre-wrap"></p>
                         <div class="mt-4 pt-4 border-t border-amber-200">
-                            <p class="text-xs text-amber-600">来自匿名用户的留言</p>
+                            <p id="messageMeta" class="text-xs text-amber-600">来自：匿名</p>
                         </div>
                     </div>
 
@@ -179,17 +177,32 @@
             return v ? decodeURIComponent(v.pop()) : null;
         }
 
+        // Read-tracking: use localStorage primarily (more reliable on GitHub Pages). Migrate from cookie if present.
         function getReadBottles(){
             try{
+                const ls = localStorage.getItem('readBottles');
+                if(ls){
+                    const arr = JSON.parse(ls);
+                    if(Array.isArray(arr)) return arr.map(x => Number(x)).filter(n => !isNaN(n));
+                }
+                // migrate from cookie if localStorage empty
                 const c = getCookie('readBottles');
                 if(!c) return [];
-                return JSON.parse(c);
+                const carr = JSON.parse(c);
+                if(!Array.isArray(carr)) return [];
+                const nums = carr.map(x => Number(x)).filter(n => !isNaN(n));
+                localStorage.setItem('readBottles', JSON.stringify(nums));
+                return nums;
             }catch(e){ return []; }
         }
         function addReadBottle(n){
             try{
+                const num = Number(n);
+                if(isNaN(num)) return;
                 const arr = getReadBottles();
-                if(!arr.includes(n)) arr.push(n);
+                if(!arr.includes(num)) arr.push(num);
+                // save to localStorage and cookie for compatibility
+                localStorage.setItem('readBottles', JSON.stringify(arr));
                 setCookie('readBottles', JSON.stringify(arr), 365);
             }catch(e){}
         }
@@ -214,7 +227,7 @@
             };
             statusContent.className = `p-4 rounded-xl text-sm ${colors[type] || colors.info}`;
             statusContent.textContent = message;
-            setTimeout(()=>{ statusMessage.classList.add('hidden'); }, 4500);
+            setTimeout(()=>{ statusMessage.classList.add('hidden'); }, 3000);
         }
 
         function switchTab(tab){
@@ -228,22 +241,33 @@
 
         async function fetchTextKey(key){
             try{
-                const r = await fetch(`${API_GET}/${encodeURIComponent(key)}`);
-                if(!r.ok) return null;
+                // timeout to avoid hanging requests
+                const controller = new AbortController();
+                const timeoutId = setTimeout(()=> controller.abort(), 8000);
+                console.debug('fetchTextKey ->', key);
+                const r = await fetch(`${API_GET}/${encodeURIComponent(key)}`, { signal: controller.signal });
+                clearTimeout(timeoutId);
+                if(!r.ok){
+                    console.warn('fetchTextKey non-ok', key, r.status);
+                    return null;
+                }
                 const t = await r.text();
                 if(!t || t.trim()==='') return null;
                 return t;
-            }catch(e){ return null; }
+            }catch(e){
+                console.error('fetchTextKey error', key, e && e.name ? e.name : e);
+                return null;
+            }
         }
 
         async function postKey(key, value){
             try{
                 const url = `${API_UPDATE}?key=${encodeURIComponent(key)}&value=${encodeURIComponent(value)}`;
                 const r = await fetch(url, { method: 'POST' });
-                if(!r.ok) return null;
+                if(!r.ok){ console.warn('postKey non-ok', key, r.status); return null; }
                 const j = await r.json().catch(()=>null);
                 return j;
-            }catch(e){ return null; }
+            }catch(e){ console.error('postKey error', key, e); return null; }
         }
 
         // Page Index helpers
@@ -291,6 +315,26 @@
         }
 
         // Pick bottle: read Page Index, then randomly pick within [1, pageIndex] excluding already-read stored in cookie
+        // seen contents dedupe using localStorage
+        function getSeenContents(){
+            try{
+                const s = localStorage.getItem('seenContents');
+                if(!s) return [];
+                const arr = JSON.parse(s);
+                if(!Array.isArray(arr)) return [];
+                return arr.map(x => String(x));
+            }catch(e){ return []; }
+        }
+        function addSeenContent(text){
+            try{
+                const t = (text || '').trim();
+                if(!t) return;
+                const arr = getSeenContents();
+                if(!arr.includes(t)) arr.push(t);
+                localStorage.setItem('seenContents', JSON.stringify(arr));
+            }catch(e){}
+        }
+
         async function pickBottle(){
             const loadingState = document.getElementById('loadingState');
             const emptyState = document.getElementById('emptyState');
@@ -314,12 +358,30 @@
                 return;
             }
 
+            showStatus('正在从可用漂流瓶中随机抽取...');
+            console.debug('pickBottle candidates count:', candidates.length);
+
+            const seenContents = getSeenContents();
+
             // attempt up to candidates.length times
-            for(let attempt=0; attempt<Math.min(candidates.length, 200); attempt++){
-                const idx = candidates[Math.floor(Math.random()*candidates.length)];
+            let attempts = Math.min(candidates.length, 200);
+            for(let attempt=0; attempt<attempts; attempt++){
+                const pickIndex = Math.floor(Math.random()*candidates.length);
+                const idx = candidates[pickIndex];
                 const key = `bottle-${idx}`;
+                console.debug('pickBottle trying', key);
                 const content = await fetchTextKey(key);
                 if(content){
+                    const trimmed = content.trim();
+                    // skip if content already seen (dedupe by content)
+                    if(seenContents.includes(trimmed)){
+                        console.debug('content already seen, marking read and skipping', key);
+                        addReadBottle(idx);
+                        candidates.splice(pickIndex,1);
+                        if(candidates.length === 0) break;
+                        continue;
+                    }
+
                     document.getElementById('bottleMessage').textContent = content;
                     // determine sender meta
                     let meta = '匿名';
@@ -331,14 +393,18 @@
                     loadingState.classList.add('hidden'); emptyState.classList.add('hidden'); foundState.classList.remove('hidden');
                     pickCount++; localStorage.setItem('pickCount', String(pickCount)); yourPickCountEl.textContent = pickCount;
 
-                    // mark as read in cookie
+                    // mark as read and seen
                     addReadBottle(idx);
+                    addSeenContent(trimmed);
                     return;
                 } else {
                     // remove this idx from candidates if empty
-                    candidates = candidates.filter(n => n !== idx);
+                    console.debug('pickBottle empty for', key);
+                    candidates.splice(pickIndex,1);
                     if(candidates.length === 0) break;
                 }
+                // update status occasionally to show progress
+                if(attempt % 6 === 0) showStatus(`尝试中... 已尝试 ${attempt+1} 次，剩余候选 ${candidates.length}`);
                 await new Promise(r=>setTimeout(r, 120));
             }
 
