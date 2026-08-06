@@ -48,7 +48,7 @@
 
     <div class="w-full max-w-lg relative z-10">
         <div class="text-center mb-8">
-            <div class="inline-flex items-center justify-center w-20 h-20 bg-white/20 rounded-full mb-4 backdrop-blur-sm float-animation">
+            <div class="inline-flex items-center justify-center w-20 h-20 bg-white/60 rounded-full mb-4 backdrop-blur-sm float-animation">
                 <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
                 </svg>
@@ -125,12 +125,6 @@
                             </svg>
                             再捞一个
                         </button>
-                        <button onclick="throwBack()" class="btn-secondary flex-1 flex items-center justify-center gap-2">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                            </svg>
-                            扔回海里
-                        </button>
                     </div>
 
                 </div>
@@ -138,7 +132,7 @@
 
                     <!-- History toggle -->
                     <div class="mt-6">
-                        <button id="historyBtn" onclick="toggleHistory()" class="btn-secondary w-full">查看历史漂流瓶</button>
+                        <button id="historyBtn" onclick="toggleHistory()" class="btn-primary w-full">查看历史漂流瓶</button>
                         <div id="historyContainer" class="hidden mt-4">
                             <div class="mb-2 flex justify-end gap-2">
                                 <button onclick="loadHistory()" class="btn-primary px-4 py-2">刷新历史</button>
@@ -373,57 +367,54 @@
             loadingState.classList.remove('hidden'); emptyState.classList.add('hidden'); foundState.classList.add('hidden');
 
             const pageIndex = await getPageIndex();
-            // Block picking if total exceeds 20 or user already picked 20
-            if(pageIndex > 10000){
-                loadingState.classList.add('hidden'); emptyState.classList.remove('hidden'); showStatus('总漂流瓶超过 20，暂不可捞取','warning');
-                return;
-            }
-            if(pickCount >= 10000){
-                loadingState.classList.add('hidden'); emptyState.classList.remove('hidden'); showStatus('你已捡到 20 个漂流瓶，暂不可继续捡取','warning');
-                return;
-            }
-
             if(!pageIndex || pageIndex <= 0){
                 loadingState.classList.add('hidden'); emptyState.classList.remove('hidden'); showStatus('当前没有可用的漂流瓶','warning');
                 return;
             }
 
-            let candidates = [];
-            for(let i=1;i<=pageIndex;i++) candidates.push(i);
-            const read = getReadBottles();
-            candidates = candidates.filter(n => !read.includes(n));
-
-            if(candidates.length === 0){
+            const readArr = getReadBottles();
+            const readSet = new Set(readArr);
+            let availableCount = pageIndex - readSet.size;
+            if(availableCount <= 0){
                 loadingState.classList.add('hidden'); emptyState.classList.remove('hidden'); showStatus('你已经看过所有漂流瓶啦','info');
                 return;
             }
 
             showStatus('正在从可用漂流瓶中随机抽取...');
-            console.debug('pickBottle candidates count:', candidates.length);
+            console.debug('pickBottle total:', pageIndex, 'read:', readArr.length, 'available:', availableCount);
 
             const seenContents = getSeenContents();
 
-            // attempt up to candidates.length times
-            let attempts = Math.min(candidates.length, 200);
-            for(let attempt=0; attempt<attempts; attempt++){
-                const pickIndex = Math.floor(Math.random()*candidates.length);
-                const idx = candidates[pickIndex];
+            // try up to availableCount attempts
+            const maxAttempts = Math.min(availableCount, 200);
+            for(let attempt=0; attempt<maxAttempts; attempt++){
+                // pick random offset among available
+                const offset = Math.floor(Math.random() * availableCount); // 0..availableCount-1
+                // map offset to actual id
+                let idx = null;
+                let cnt = 0;
+                for(let i=1;i<=pageIndex;i++){
+                    if(readSet.has(i)) continue;
+                    if(cnt === offset){ idx = i; break; }
+                    cnt++;
+                }
+                if(idx === null){ break; }
+
                 const key = `bottle-${idx}`;
                 console.debug('pickBottle trying', key);
                 const content = await fetchTextKey(key);
                 if(content){
                     const trimmed = content.trim();
-                    // skip if content already seen (dedupe by content)
                     if(seenContents.includes(trimmed)){
                         console.debug('content already seen, marking read and skipping', key);
                         addReadBottle(idx);
-                        candidates.splice(pickIndex,1);
-                        if(candidates.length === 0) break;
+                        readSet.add(idx);
+                        availableCount = Math.max(0, availableCount - 1);
+                        if(availableCount === 0) break;
                         continue;
                     }
 
                     document.getElementById('bottleMessage').textContent = content;
-                    // determine sender meta
                     let meta = '匿名';
                     const lines = content.split('\n');
                     const last = lines[lines.length-1];
@@ -433,18 +424,17 @@
                     loadingState.classList.add('hidden'); emptyState.classList.add('hidden'); foundState.classList.remove('hidden');
                     pickCount++; localStorage.setItem('pickCount', String(pickCount)); yourPickCountEl.textContent = pickCount;
 
-                    // mark as read and seen
                     addReadBottle(idx);
                     addSeenContent(trimmed);
                     return;
                 } else {
-                    // remove this idx from candidates if empty
                     console.debug('pickBottle empty for', key);
-                    candidates.splice(pickIndex,1);
-                    if(candidates.length === 0) break;
+                    addReadBottle(idx);
+                    readSet.add(idx);
+                    availableCount = Math.max(0, availableCount - 1);
+                    if(availableCount === 0) break;
                 }
-                // update status occasionally to show progress
-                if(attempt % 6 === 0) showStatus(`尝试中... 已尝试 ${attempt+1} 次，剩余候选 ${candidates.length}`);
+                if(attempt % 6 === 0) showStatus(`尝试中... 已尝试 ${attempt+1} 次，剩余候选 ${availableCount}`);
                 await new Promise(r=>setTimeout(r, 120));
             }
 
