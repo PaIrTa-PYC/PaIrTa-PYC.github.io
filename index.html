@@ -37,8 +37,8 @@
         }
     </style>
 </head>
-<body class="font-inter min-h-screen ocean-bg flex items-center justify-center p-4 overflow-hidden">
-    <div class="fixed inset-0 overflow-hidden pointer-events-none">
+<body class="font-inter min-h-screen ocean-bg flex items-center justify-center p-4 overflow-auto">
+    <div class="fixed inset-0 pointer-events-none">
         <div class="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-blue-400/30 to-transparent wave-animation"></div>
         <div class="absolute bottom-10 left-10 w-20 h-20 bg-white/10 rounded-full blur-xl"></div>
         <div class="absolute bottom-20 right-20 w-32 h-32 bg-white/10 rounded-full blur-xl"></div>
@@ -131,6 +131,18 @@
                             扔回海里
                         </button>
                     </div>
+
+                    <!-- History toggle -->
+                    <div class="mt-6">
+                        <button id="historyBtn" onclick="toggleHistory()" class="btn-secondary w-full">查看历史漂流瓶</button>
+                        <div id="historyContainer" class="hidden mt-4">
+                            <div class="mb-2 flex justify-end gap-2">
+                                <button onclick="loadHistory()" class="btn-primary px-4 py-2">刷新历史</button>
+                                <button onclick="clearHistory()" class="btn-secondary px-4 py-2">清除历史</button>
+                            </div>
+                            <div id="historyList" class="space-y-3 max-h-64 overflow-auto"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -142,7 +154,7 @@
                 <div class="flex justify-center gap-8 text-center">
                     <div>
                         <p class="text-2xl font-bold text-gray-700" id="todayCount">--</p>
-                        <p class="text-xs text-gray-500">今日漂流瓶</p>
+                        <p class="text-xs text-gray-500">总漂流瓶</p>
                     </div>
                     <div>
                         <p class="text-2xl font-bold text-gray-700" id="yourPickCount">0</p>
@@ -230,6 +242,13 @@
             setTimeout(()=>{ statusMessage.classList.add('hidden'); }, 3000);
         }
 
+        // format total count: if greater than 10 show '无限'
+        function formatCount(n){
+            const num = Number(n) || 0;
+            if(num > 10000) return '太多啦';
+            return String(num);
+        }
+
         function switchTab(tab){
             const sendSection = document.getElementById('sendSection');
             const pickSection = document.getElementById('pickSection');
@@ -272,6 +291,8 @@
 
         // Page Index helpers
         async function getPageIndex(){
+            // returns current total number of bottles
+
             const t = await fetchTextKey('Page Index');
             if(!t) return 0;
             const n = parseInt(t,10);
@@ -304,7 +325,7 @@
                 if(res && (res.status===1 || res.status==='1')){
                     bottleContent.value=''; bottleCharCount.textContent='0';
                     setNextIndex(nextIdx+1);
-                    todayCountEl.textContent = String(nextIdx);
+                    todayCountEl.textContent = formatCount(nextIdx);
                     showStatus('\uD83C\uDF89 漂流瓶已成功扔进大海','success');
                 }else{
                     // if failed, roll back Page Index (best-effort)
@@ -414,12 +435,55 @@
 
         function throwBack(){ pickBottle(); }
 
+        // History: load and display read bottles
+        function toggleHistory(){
+            const c = document.getElementById('historyContainer');
+            if(!c) return;
+            if(c.classList.contains('hidden')){
+                c.classList.remove('hidden');
+                loadHistory();
+                document.getElementById('historyBtn').textContent = '隐藏历史漂流瓶';
+            } else {
+                c.classList.add('hidden');
+                document.getElementById('historyBtn').textContent = '查看历史漂流瓶';
+            }
+        }
+
+        async function loadHistory(){
+            const listEl = document.getElementById('historyList');
+            if(!listEl) return;
+            listEl.innerHTML = '';
+            const read = getReadBottles();
+            if(!read || read.length===0){
+                listEl.innerHTML = '<div class="text-sm text-gray-500">没有历史记录</div>';
+                return;
+            }
+            // show most recent first
+            const ids = read.slice().reverse();
+            for(const id of ids){
+                const key = `bottle-${id}`;
+                const content = await fetchTextKey(key) || '(已被删除或为空)';
+                const item = document.createElement('div');
+                item.className = 'p-3 bg-white/60 rounded-lg border border-gray-100';
+                item.innerHTML = `<div class="text-xs text-gray-500">${key}</div><div class="whitespace-pre-wrap mt-2 text-gray-800">${escapeHtml(content)}</div>`;
+                listEl.appendChild(item);
+            }
+        }
+
+        function clearHistory(){
+            localStorage.removeItem('readBottles');
+            localStorage.removeItem('seenContents');
+            setCookie('readBottles','',-1);
+            const listEl = document.getElementById('historyList');
+            if(listEl) listEl.innerHTML = '<div class="text-sm text-gray-500">已清除历史</div>';
+        }
+
         // init
         document.addEventListener('DOMContentLoaded', async ()=>{
             // ensure next index exists
             if(!localStorage.getItem('nextBottleIndex')) localStorage.setItem('nextBottleIndex','1');
             const idx = await getPageIndex();
-            todayCountEl.textContent = String(idx);
+            todayCountEl.textContent = formatCount(idx);
             // ensure anonymous checkbox exists
             const anon = document.getElementById('anonymousChk');
             if(anon){
