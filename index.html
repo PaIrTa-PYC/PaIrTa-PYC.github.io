@@ -470,7 +470,7 @@
             // show most recent first
             const ids = read.slice().reverse();
             for(const id of ids){
-                const key = `bottle-${id}`;
+                const key = ``;
                 const content = await fetchTextKey(key) || '(已被删除或为空)';
                 const item = document.createElement('div');
                 item.className = 'p-3 bg-white/60 rounded-lg border border-gray-100';
