@@ -54,7 +54,7 @@
                 </svg>
             </div>
             <h1 class="text-3xl font-bold text-white mb-2">漂流瓶</h1>
-            <p class="text-white/80">Wormwaker是给</p>
+            <p class="text-white/80">Stars是给</p>
         </div>
 
         <div class="bottle-glass rounded-3xl p-8 shadow-2xl">
@@ -130,17 +130,7 @@
                 </div>
             </div>
 
-                    <!-- History toggle -->
-                    <div class="mt-6">
-                        <button id="historyBtn" onclick="toggleHistory()" class="btn-primary w-full">查看历史漂流瓶</button>
-                        <div id="historyContainer" class="hidden mt-4">
-                            <div class="mb-2 flex justify-end gap-2">
-                                <button onclick="loadHistory()" class="btn-primary px-4 py-2">刷新历史</button>
-                                <button onclick="clearHistory()" class="btn-secondary px-4 py-2">清除历史</button>
-                            </div>
-                            <div id="historyList" class="space-y-3 max-h-64 overflow-auto"></div>
-                        </div>
-                    </div>
+                    <!-- 历史功能已移除 -->
 
             <div id="statusMessage" class="mt-6 hidden">
                 <div id="statusContent" class="p-4 rounded-xl text-sm"></div>
@@ -188,17 +178,28 @@
         // Read-tracking: use localStorage primarily (more reliable on GitHub Pages). Migrate from cookie if present.
         function getReadBottles(){
             try{
+                // Prefer localStorage, migrate and sanitize if needed
+                const sanitize = (a)=>{
+                    const nums = (a||[]).map(x => Number(x)).filter(n => Number.isInteger(n) && n>0);
+                    const uniq = Array.from(new Set(nums));
+                    return uniq;
+                };
                 const ls = localStorage.getItem('readBottles');
                 if(ls){
                     const arr = JSON.parse(ls);
-                    if(Array.isArray(arr)) return arr.map(x => Number(x)).filter(n => !isNaN(n));
+                    if(Array.isArray(arr)){
+                        const good = sanitize(arr);
+                        // persist sanitized
+                        localStorage.setItem('readBottles', JSON.stringify(good));
+                        return good;
+                    }
                 }
                 // migrate from cookie if localStorage empty
                 const c = getCookie('readBottles');
                 if(!c) return [];
                 const carr = JSON.parse(c);
                 if(!Array.isArray(carr)) return [];
-                const nums = carr.map(x => Number(x)).filter(n => !isNaN(n));
+                const nums = sanitize(carr);
                 localStorage.setItem('readBottles', JSON.stringify(nums));
                 return nums;
             }catch(e){ return []; }
@@ -206,9 +207,11 @@
         function addReadBottle(n){
             try{
                 const num = Number(n);
-                if(isNaN(num)) return;
+                if(!Number.isInteger(num) || num<=0) return;
                 const arr = getReadBottles();
                 if(!arr.includes(num)) arr.push(num);
+                // keep sorted stable list
+                arr.sort((a,b)=>a-b);
                 // save to localStorage and cookie for compatibility
                 localStorage.setItem('readBottles', JSON.stringify(arr));
                 setCookie('readBottles', JSON.stringify(arr), 365);
@@ -371,10 +374,15 @@
                 loadingState.classList.add('hidden'); emptyState.classList.remove('hidden'); showStatus('当前没有可用的漂流瓶','warning');
                 return;
             }
-
             const readArr = getReadBottles();
             const readSet = new Set(readArr);
-            let availableCount = pageIndex - readSet.size;
+
+            // Build explicit list of available IDs (1..pageIndex excluding read)
+            const availableIds = [];
+            for(let i=1;i<=pageIndex;i++){
+                if(!readSet.has(i)) availableIds.push(i);
+            }
+            let availableCount = availableIds.length;
             if(availableCount <= 0){
                 loadingState.classList.add('hidden'); emptyState.classList.remove('hidden'); showStatus('你已经看过所有漂流瓶啦','info');
                 return;
@@ -385,32 +393,21 @@
 
             const seenContents = getSeenContents();
 
-            // try up to availableCount attempts
-            const maxAttempts = Math.min(availableCount, 200);
-            for(let attempt=0; attempt<maxAttempts; attempt++){
-                // pick random offset among available
-                const offset = Math.floor(Math.random() * availableCount); // 0..availableCount-1
-                // map offset to actual id
-                let idx = null;
-                let cnt = 0;
-                for(let i=1;i<=pageIndex;i++){
-                    if(readSet.has(i)) continue;
-                    if(cnt === offset){ idx = i; break; }
-                    cnt++;
-                }
-                if(idx === null){ break; }
-
+            // Try selecting from availableIds, removing candidates that are empty or already-seen
+            const maxAttempts = Math.min(availableCount, 500);
+            for(let attempt=0; attempt<maxAttempts && availableIds.length>0; attempt++){
+                const r = Math.floor(Math.random() * availableIds.length);
+                const idx = availableIds[r];
                 const key = `bottle-${idx}`;
-                console.debug('pickBottle trying', key);
+                console.debug('pickBottle trying', key, 'attempt', attempt+1, 'remainingCandidates', availableIds.length);
                 const content = await fetchTextKey(key);
                 if(content){
                     const trimmed = content.trim();
                     if(seenContents.includes(trimmed)){
-                        console.debug('content already seen, marking read and skipping', key);
+                        console.debug('content already seen, removing candidate', key);
                         addReadBottle(idx);
-                        readSet.add(idx);
-                        availableCount = Math.max(0, availableCount - 1);
-                        if(availableCount === 0) break;
+                        // remove this candidate
+                        availableIds.splice(r,1);
                         continue;
                     }
 
@@ -428,14 +425,12 @@
                     addSeenContent(trimmed);
                     return;
                 } else {
-                    console.debug('pickBottle empty for', key);
+                    console.debug('pickBottle empty for', key, 'removing candidate');
                     addReadBottle(idx);
-                    readSet.add(idx);
-                    availableCount = Math.max(0, availableCount - 1);
-                    if(availableCount === 0) break;
+                    // remove this candidate
+                    availableIds.splice(r,1);
+                    continue;
                 }
-                if(attempt % 6 === 0) showStatus(`尝试中... 已尝试 ${attempt+1} 次，剩余候选 ${availableCount}`);
-                await new Promise(r=>setTimeout(r, 120));
             }
 
             loadingState.classList.add('hidden'); emptyState.classList.remove('hidden'); foundState.classList.add('hidden');
@@ -444,48 +439,7 @@
 
         function throwBack(){ pickBottle(); }
 
-        // History: load and display read bottles
-        function toggleHistory(){
-            const c = document.getElementById('historyContainer');
-            if(!c) return;
-            if(c.classList.contains('hidden')){
-                c.classList.remove('hidden');
-                loadHistory();
-                document.getElementById('historyBtn').textContent = '隐藏历史漂流瓶';
-            } else {
-                c.classList.add('hidden');
-                document.getElementById('historyBtn').textContent = '查看历史漂流瓶';
-            }
-        }
-
-        async function loadHistory(){
-            const listEl = document.getElementById('historyList');
-            if(!listEl) return;
-            listEl.innerHTML = '';
-            const read = getReadBottles();
-            if(!read || read.length===0){
-                listEl.innerHTML = '<div class="text-sm text-gray-500">没有历史记录</div>';
-                return;
-            }
-            // show most recent first
-            const ids = read.slice().reverse();
-            for(const id of ids){
-                const key = ``;
-                const content = await fetchTextKey(key) || '(已被删除或为空)';
-                const item = document.createElement('div');
-                item.className = 'p-3 bg-white/60 rounded-lg border border-gray-100';
-                item.innerHTML = `<div class="text-xs text-gray-500">${key}</div><div class="whitespace-pre-wrap mt-2 text-gray-800">${escapeHtml(content)}</div>`;
-                listEl.appendChild(item);
-            }
-        }
-
-        function clearHistory(){
-            localStorage.removeItem('readBottles');
-            localStorage.removeItem('seenContents');
-            setCookie('readBottles','',-1);
-            const listEl = document.getElementById('historyList');
-            if(listEl) listEl.innerHTML = '<div class="text-sm text-gray-500">已清除历史</div>';
-        }
+        // 历史功能已删除：toggleHistory/loadHistory/clearHistory 不再存在
 
         // init
         document.addEventListener('DOMContentLoaded', async ()=>{
