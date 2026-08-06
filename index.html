@@ -267,18 +267,19 @@
                 // timeout to avoid hanging requests
                 const controller = new AbortController();
                 const timeoutId = setTimeout(()=> controller.abort(), 8000);
-                console.debug('fetchTextKey ->', key);
+                console.log('fetchTextKey ->', key);
                 const r = await fetch(`${API_GET}/${encodeURIComponent(key)}`, { signal: controller.signal });
                 clearTimeout(timeoutId);
                 if(!r.ok){
-                    console.warn('fetchTextKey non-ok', key, r.status);
+                    console.log('fetchTextKey non-ok', key, r.status);
                     return null;
                 }
                 const t = await r.text();
+                console.log('fetchTextKey got', key, 'len', t ? t.length : 0);
                 if(!t || t.trim()==='') return null;
                 return t;
             }catch(e){
-                console.error('fetchTextKey error', key, e && e.name ? e.name : e);
+                console.log('fetchTextKey error', key, e && e.name ? e.name : e);
                 return null;
             }
         }
@@ -375,7 +376,12 @@
                 return;
             }
             const readArr = getReadBottles();
-            const readSet = new Set(readArr);
+            console.log('raw localStorage.readBottles:', localStorage.getItem('readBottles'));
+            console.log('parsed readArr:', readArr);
+            // only consider reads within current pageIndex range
+            const readFiltered = (readArr||[]).filter(n => Number.isInteger(n) && n>=1 && n<=pageIndex);
+            console.log('readFiltered (in range):', readFiltered);
+            const readSet = new Set(readFiltered);
 
             // Build explicit list of available IDs (1..pageIndex excluding read)
             const availableIds = [];
@@ -383,24 +389,38 @@
                 if(!readSet.has(i)) availableIds.push(i);
             }
             let availableCount = availableIds.length;
-            if(availableCount == pageIndex){
+            if(availableCount <= 0 && pageIndex === pickCount){
                 loadingState.classList.add('hidden'); emptyState.classList.remove('hidden'); showStatus('你已经看过所有漂流瓶啦','info');
                 return;
             }
 
             showStatus('正在从可用漂流瓶中随机抽取...');
-            console.debug('pickBottle total:', pageIndex, 'read:', readArr.length, 'available:', availableCount);
+            console.log('pickBottle total:', pageIndex, 'readTotal:', readArr.length, 'readInRange:', readFiltered.length, 'available:', availableCount);
 
             const seenContents = getSeenContents();
 
             // Try selecting from availableIds, removing candidates that are empty or already-seen
-            const maxAttempts = Math.min(availableCount, 500);
+            const maxAttempts = Math.min(availableCount, 1000);
             for(let attempt=0; attempt<maxAttempts && availableIds.length>0; attempt++){
                 const r = Math.floor(Math.random() * availableIds.length);
                 const idx = availableIds[r];
                 const key = `bottle-${idx}`;
-                console.debug('pickBottle trying', key, 'attempt', attempt+1, 'remainingCandidates', availableIds.length);
-                const content = await fetchTextKey(key);
+                console.log('pickBottle trying', key, 'attempt', attempt+1, 'remainingCandidates', availableIds.length);
+
+                // inline fetch with logging to bypass any fetchTextKey regression
+                let content = null;
+                try{
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(()=> controller.abort(), 8000);
+                    const resp = await fetch(`${API_GET}/${encodeURIComponent(key)}`, { signal: controller.signal });
+                    clearTimeout(timeoutId);
+                    console.log('fetch', key, 'status', resp.status);
+                    if(resp.ok){
+                        const t = await resp.text();
+                        if(t && t.trim()!=='') content = t;
+                    }
+                }catch(e){ console.log('fetch error', key, e && e.name ? e.name : e); }
+
                 if(content){
                     const trimmed = content.trim();
                     if(seenContents.includes(trimmed)){
