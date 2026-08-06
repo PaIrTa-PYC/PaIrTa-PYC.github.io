@@ -24,7 +24,6 @@
     </script>
     <style type="text/tailwindcss">
         @layer utilities {
-            .content-auto { content-visibility: auto; }
             .ocean-bg { background: linear-gradient(180deg, #0c4a6e 0%, #0284c7 50%, #38bdf8 100%);} 
             .wave-animation { animation: wave 3s ease-in-out infinite; }
             @keyframes wave { 0%,100%{transform:translateY(0);}50%{transform:translateY(-10px);} }
@@ -33,8 +32,6 @@
             .bottle-glass { background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); border:1px solid rgba(255,255,255,0.3);} 
             .input-focus { @apply focus:ring-2 focus:ring-primary/50 focus:border-primary focus:outline-none; }
             .btn-primary { @apply bg-gradient-to-r from-primary to-secondary text-white px-6 py-3 rounded-xl font-medium shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transform hover:-translate-y-0.5 transition-all duration-200; }
-            /* 深色次要按钮，增加对比 */
-            .btn-secondary { @apply bg-white/40 text-white px-6 py-3 rounded-xl font-medium border border-white/50 hover:bg-white/60 transform hover:-translate-y-0.5 transition-all duration-200; }
         }
     </style>
 </head>
@@ -54,15 +51,18 @@
                 </svg>
             </div>
             <h1 class="text-3xl font-bold text-white mb-2">漂流瓶</h1>
-            <p class="text-white/80">Wormwaker是给</p>
+            <p class="text-white/80">Stars喜欢Wormwaker</p>
         </div>
 
         <div class="bottle-glass rounded-3xl p-8 shadow-2xl">
+            <!-- Tabs -->
             <div class="flex gap-2 mb-6">
-                <button onclick="switchTab('send')" id="sendTab" class="flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all duration-200 bg-primary text-white">📤 扔漂流瓶</button>
-                <button onclick="switchTab('pick')" id="pickTab" class="flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all duration-200 bg-gray-100 text-gray-600">🧺 捡漂流瓶</button>
+                <button onclick="switchTab('send')" id="sendTab" class="tab-btn flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all duration-200 bg-primary text-white">📤 扔漂流瓶</button>
+                <button onclick="switchTab('pick')" id="pickTab" class="tab-btn flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all duration-200 bg-gray-100 text-gray-600">🧺 捡漂流瓶</button>
+                <button onclick="switchTab('history')" id="historyTab" class="tab-btn flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all duration-200 bg-gray-100 text-gray-600">📜 历史</button>
             </div>
 
+            <!-- 扔漂流瓶 -->
             <div id="sendSection">
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700 mb-2">写下你的留言</label>
@@ -72,12 +72,10 @@
                         <p class="text-xs text-gray-500"><span id="bottleCharCount">0</span> 字符</p>
                     </div>
                 </div>
-
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700 mb-2">显示名字（若不匿名）</label>
                     <input id="senderName" type="text" placeholder="你的名字（可选）" class="w-full px-4 py-2 border border-gray-200 rounded-xl input-focus bg-white/50" />
                 </div>
-
                 <button onclick="sendBottle()" class="btn-primary w-full flex items-center justify-center gap-2">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
@@ -86,27 +84,32 @@
                 </button>
             </div>
 
+            <!-- 捡漂流瓶 -->
             <div id="pickSection" class="hidden">
-                <div id="loadingState" class="hidden text-center py-8">
+                <!-- 加载状态 -->
+                <div id="pickLoading" class="hidden text-center py-8">
                     <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
-                        <svg class="w-8 h-8 text-primary animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                        <svg class="w-8 h-8 text-primary animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                         </svg>
                     </div>
                     <p class="text-gray-600">正在搜寻漂流瓶...</p>
                 </div>
 
-                <div id="emptyState" class="text-center py-8">
+                <!-- 初始状态 -->
+                <div id="pickIdle" class="text-center py-8">
                     <div class="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
                         <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
                         </svg>
                     </div>
                     <p class="text-gray-600 mb-4">还没有捡到漂流瓶</p>
-                    <button onclick="pickBottle()" class="btn-primary">去海里捞一个</button>
+                    <button id="pickBtn" onclick="pickBottle()" class="btn-primary">去海里捞一个</button>
                 </div>
 
-                <div id="foundState" class="hidden">
+                <!-- 捡到瓶子 -->
+                <div id="pickFound" class="hidden">
                     <div class="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl p-6 mb-6">
                         <div class="flex items-center gap-2 mb-3">
                             <span class="text-2xl">🍾</span>
@@ -117,34 +120,55 @@
                             <p id="messageMeta" class="text-xs text-amber-600">来自：匿名</p>
                         </div>
                     </div>
+                    <button id="pickAgainBtn" onclick="pickBottle()" class="btn-primary w-full flex items-center justify-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                        </svg>
+                        再捞一个
+                    </button>
+                </div>
 
-                    <div class="flex gap-3">
-                        <button onclick="pickBottle()" class="btn-primary flex-1 flex items-center justify-center gap-2">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                            </svg>
-                            再捞一个
-                        </button>
+                <!-- 全部捡完 -->
+                <div id="pickDone" class="hidden text-center py-8">
+                    <div class="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
+                        <span class="text-3xl">🎉</span>
                     </div>
-
+                    <p class="text-gray-700 font-medium mb-2">你已经捡完了所有漂流瓶！</p>
+                    <p class="text-gray-500 text-sm">由于代码问题，如果你新扔出了一个漂流瓶，你需要刷新网页才能获取</p>
                 </div>
             </div>
 
-                    <!-- 历史功能已移除 -->
+            <!-- 历史 -->
+            <div id="historySection" class="hidden">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-sm font-medium text-gray-700">已捡到的瓶子 (<span id="historyCount">0</span>)</h3>
+                    <button onclick="clearHistory()" class="text-xs text-red-400 hover:text-red-600 transition-colors">清空记录</button>
+                </div>
+                <div id="historyList" class="space-y-3 max-h-96 overflow-y-auto"></div>
+                <div id="historyEmpty" class="text-center py-8 text-gray-400">
+                    <p>还没有捡过漂流瓶</p>
+                </div>
+            </div>
 
+            <!-- 状态消息 -->
             <div id="statusMessage" class="mt-6 hidden">
                 <div id="statusContent" class="p-4 rounded-xl text-sm"></div>
             </div>
 
+            <!-- 统计 -->
             <div class="mt-6 pt-6 border-t border-gray-200">
                 <div class="flex justify-center gap-8 text-center">
                     <div>
-                        <p class="text-2xl font-bold text-gray-700" id="todayCount">--</p>
+                        <p class="text-2xl font-bold text-gray-700" id="statTotal">--</p>
                         <p class="text-xs text-gray-500">总漂流瓶</p>
                     </div>
                     <div>
-                        <p class="text-2xl font-bold text-gray-700" id="yourPickCount">0</p>
+                        <p class="text-2xl font-bold text-gray-700" id="statPicked">0</p>
                         <p class="text-xs text-gray-500">你捡到的</p>
+                    </div>
+                    <div>
+                        <p class="text-2xl font-bold text-gray-700" id="statRemain">--</p>
+                        <p class="text-xs text-gray-500">剩余可捡</p>
                     </div>
                 </div>
             </div>
@@ -157,342 +181,366 @@
         const API_UPDATE = 'https://api.textdb.online/update';
         const API_GET = 'https://textdb.online';
 
-        const bottleContent = document.getElementById('bottleContent');
-        const bottleCharCount = document.getElementById('bottleCharCount');
-        const yourPickCountEl = document.getElementById('yourPickCount');
-        const todayCountEl = document.getElementById('todayCount');
+        let totalBottles = 0;
 
-        bottleContent.addEventListener('input', () => { bottleCharCount.textContent = bottleContent.value.length; });
+        // ===== DOM refs =====
+        const $ = id => document.getElementById(id);
 
-        // Cookie helpers
+        // ===== Cookie =====
         function setCookie(name, value, days = 365) {
             const d = new Date();
-            d.setTime(d.getTime() + (days*24*60*60*1000));
+            d.setTime(d.getTime() + days*86400000);
             document.cookie = `${name}=${encodeURIComponent(value)};expires=${d.toUTCString()};path=/;SameSite=Lax`;
         }
-        function getCookie(name) {
-            const v = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
-            return v ? decodeURIComponent(v.pop()) : null;
+
+        // ===== localStorage helpers =====
+        function getReadBottles() {
+            try {
+                const s = localStorage.getItem('readBottles');
+                if (!s) return [];
+                const arr = JSON.parse(s);
+                return Array.isArray(arr) ? arr.filter(n => Number.isInteger(n) && n > 0) : [];
+            } catch(e) { return []; }
         }
 
-        // Read-tracking: use localStorage primarily (more reliable on GitHub Pages). Migrate from cookie if present.
-        function getReadBottles(){
-            try{
-                // Prefer localStorage, migrate and sanitize if needed
-                const sanitize = (a)=>{
-                    const nums = (a||[]).map(x => Number(x)).filter(n => Number.isInteger(n) && n>0);
-                    const uniq = Array.from(new Set(nums));
-                    return uniq;
-                };
-                const ls = localStorage.getItem('readBottles');
-                if(ls){
-                    const arr = JSON.parse(ls);
-                    if(Array.isArray(arr)){
-                        const good = sanitize(arr);
-                        // persist sanitized
-                        localStorage.setItem('readBottles', JSON.stringify(good));
-                        return good;
-                    }
-                }
-                // migrate from cookie if localStorage empty
-                const c = getCookie('readBottles');
-                if(!c) return [];
-                const carr = JSON.parse(c);
-                if(!Array.isArray(carr)) return [];
-                const nums = sanitize(carr);
-                localStorage.setItem('readBottles', JSON.stringify(nums));
-                return nums;
-            }catch(e){ return []; }
-        }
-        function addReadBottle(n){
-            try{
-                const num = Number(n);
-                if(!Number.isInteger(num) || num<=0) return;
-                const arr = getReadBottles();
-                if(!arr.includes(num)) arr.push(num);
-                // keep sorted stable list
-                arr.sort((a,b)=>a-b);
-                // save to localStorage and cookie for compatibility
-                localStorage.setItem('readBottles', JSON.stringify(arr));
-                setCookie('readBottles', JSON.stringify(arr), 365);
-            }catch(e){}
+        function saveReadBottles(arr) {
+            localStorage.setItem('readBottles', JSON.stringify(arr));
         }
 
-        // next key index stored locally, start from 1
-        function getNextIndex() { return parseInt(localStorage.getItem('nextBottleIndex') || '1', 10); }
-        function setNextIndex(n) { localStorage.setItem('nextBottleIndex', String(n)); }
+        function addReadBottle(n) {
+            const arr = getReadBottles();
+            if (!arr.includes(n)) {
+                arr.push(n);
+                arr.sort((a, b) => a - b);
+                saveReadBottles(arr);
+            }
+        }
 
-        // track pick count
-        let pickCount = parseInt(localStorage.getItem('pickCount') || '0', 10);
-        yourPickCountEl.textContent = pickCount;
+        function getHistory() {
+            try {
+                const s = localStorage.getItem('bottleHistory');
+                if (!s) return [];
+                const arr = JSON.parse(s);
+                return Array.isArray(arr) ? arr : [];
+            } catch(e) { return []; }
+        }
 
-        function showStatus(message, type='info'){
-            const statusMessage = document.getElementById('statusMessage');
-            const statusContent = document.getElementById('statusContent');
-            statusMessage.classList.remove('hidden');
+        function addToHistory(idx, content, meta) {
+            const arr = getHistory();
+            if (arr.some(item => item.id === idx)) return;
+            arr.unshift({ id: idx, content, from: meta, time: new Date().toLocaleString('zh-CN') });
+            localStorage.setItem('bottleHistory', JSON.stringify(arr));
+        }
+
+        function escapeHtml(s) {
+            if (!s) return '';
+            return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+
+        // ===== 状态显示 =====
+        function showStatus(msg, type = 'info') {
+            const el = $('statusMessage');
+            const content = $('statusContent');
+            el.classList.remove('hidden');
             const colors = {
                 success: 'bg-green-50 text-green-700 border border-green-200',
                 error: 'bg-red-50 text-red-700 border border-red-200',
                 info: 'bg-blue-50 text-blue-700 border border-blue-200',
                 warning: 'bg-yellow-50 text-yellow-700 border border-yellow-200'
             };
-            statusContent.className = `p-4 rounded-xl text-sm ${colors[type] || colors.info}`;
-            statusContent.textContent = message;
-            setTimeout(()=>{ statusMessage.classList.add('hidden'); }, 3000);
+            content.className = `p-4 rounded-xl text-sm ${colors[type] || colors.info}`;
+            content.textContent = msg;
+            setTimeout(() => el.classList.add('hidden'), 3000);
         }
 
-        // escape HTML for safe history display
-        function escapeHtml(s){
-            if(!s) return '';
-            return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        // ===== 界面状态管理（互斥显示） =====
+        function showPickState(state) {
+            $('pickLoading').classList.add('hidden');
+            $('pickIdle').classList.add('hidden');
+            $('pickFound').classList.add('hidden');
+            $('pickDone').classList.add('hidden');
+
+            if (state === 'loading') $('pickLoading').classList.remove('hidden');
+            else if (state === 'idle') $('pickIdle').classList.remove('hidden');
+            else if (state === 'found') $('pickFound').classList.remove('hidden');
+            else if (state === 'done') $('pickDone').classList.remove('hidden');
         }
 
-        // format total count: always show actual number
-        function formatCount(n){
-            const num = Number(n) || 0;
-            return String(num);
+        // ===== 统计更新 =====
+        function updateStats() {
+            const readArr = getReadBottles();
+            const validCount = readArr.filter(n => n >= 1 && n <= totalBottles).length;
+            $('statTotal').textContent = totalBottles || '--';
+            $('statPicked').textContent = validCount;
+            $('statRemain').textContent = totalBottles > 0 ? Math.max(0, totalBottles - validCount) : '--';
         }
 
-        function switchTab(tab){
-            const sendSection = document.getElementById('sendSection');
-            const pickSection = document.getElementById('pickSection');
-            const sendTab = document.getElementById('sendTab');
-            const pickTab = document.getElementById('pickTab');
-            if(tab==='send'){ sendSection.classList.remove('hidden'); pickSection.classList.add('hidden'); sendTab.className = 'flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all duration-200 bg-primary text-white'; pickTab.className='flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all duration-200 bg-gray-100 text-gray-600'; }
-            else { sendSection.classList.add('hidden'); pickSection.classList.remove('hidden'); sendTab.className='flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all duration-200 bg-gray-100 text-gray-600'; pickTab.className='flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all duration-200 bg-primary text-white'; }
-        }
+        // ===== Tab =====
+        function switchTab(tab) {
+            const activeCls = 'tab-btn flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all duration-200 bg-primary text-white';
+            const inactiveCls = 'tab-btn flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all duration-200 bg-gray-100 text-gray-600';
 
-        async function fetchTextKey(key){
-            try{
-                // timeout to avoid hanging requests
-                const controller = new AbortController();
-                const timeoutId = setTimeout(()=> controller.abort(), 8000);
-                console.log('fetchTextKey ->', key);
-                const r = await fetch(`${API_GET}/${encodeURIComponent(key)}`, { signal: controller.signal });
-                clearTimeout(timeoutId);
-                if(!r.ok){
-                    console.log('fetchTextKey non-ok', key, r.status);
-                    return null;
-                }
-                const t = await r.text();
-                console.log('fetchTextKey got', key, 'len', t ? t.length : 0);
-                if(!t || t.trim()==='') return null;
-                return t;
-            }catch(e){
-                console.log('fetchTextKey error', key, e && e.name ? e.name : e);
-                return null;
+            $('sendTab').className = inactiveCls;
+            $('pickTab').className = inactiveCls;
+            $('historyTab').className = inactiveCls;
+            $('sendSection').classList.add('hidden');
+            $('pickSection').classList.add('hidden');
+            $('historySection').classList.add('hidden');
+
+            if (tab === 'send') {
+                $('sendTab').className = activeCls;
+                $('sendSection').classList.remove('hidden');
+            } else if (tab === 'pick') {
+                $('pickTab').className = activeCls;
+                $('pickSection').classList.remove('hidden');
+                checkPickDone();
+            } else if (tab === 'history') {
+                $('historyTab').className = activeCls;
+                $('historySection').classList.remove('hidden');
+                renderHistory();
             }
         }
 
-        async function postKey(key, value){
-            try{
+        // ===== 检查是否全部捡完 =====
+        function checkPickDone() {
+            if (totalBottles <= 0) {
+                showPickState('idle');
+                return;
+            }
+            const readArr = getReadBottles();
+            const validCount = readArr.filter(n => n >= 1 && n <= totalBottles).length;
+            if (validCount >= totalBottles) {
+                showPickState('done');
+            }
+            // 如果不是 done，保持当前状态不变
+        }
+
+        // ===== API =====
+        async function fetchKey(key) {
+            try {
+                const controller = new AbortController();
+                const tid = setTimeout(() => controller.abort(), 8000);
+                const r = await fetch(`${API_GET}/${encodeURIComponent(key)}`, { signal: controller.signal });
+                clearTimeout(tid);
+                if (!r.ok) return null;
+                const t = await r.text();
+                return (t && t.trim() !== '') ? t : null;
+            } catch(e) { return null; }
+        }
+
+        async function postKey(key, value) {
+            try {
                 const url = `${API_UPDATE}?key=${encodeURIComponent(key)}&value=${encodeURIComponent(value)}`;
                 const r = await fetch(url, { method: 'POST' });
-                if(!r.ok){ console.warn('postKey non-ok', key, r.status); return null; }
-                const j = await r.json().catch(()=>null);
-                return j;
-            }catch(e){ console.error('postKey error', key, e); return null; }
+                if (!r.ok) return null;
+                return await r.json().catch(() => null);
+            } catch(e) { return null; }
         }
 
-        // Page Index helpers
-        async function getPageIndex(){
-            // returns current total number of bottles
-
-            const t = await fetchTextKey('Page Index');
-            if(!t) return 0;
-            const n = parseInt(t,10);
-            return isNaN(n)?0:n;
-        }
-        async function setPageIndex(n){
-            await postKey('Page Index', String(n));
-        }
-        async function incrementPageIndex(){
-            const cur = await getPageIndex();
-            const next = cur + 1;
-            await setPageIndex(next);
-            return next;
+        async function getTotalBottles() {
+            const t = await fetchKey('Page Index');
+            return t ? (parseInt(t, 10) || 0) : 0;
         }
 
-        async function sendBottle(){
-            const content = bottleContent.value;
-            const anonymous = document.getElementById('anonymousChk') ? document.getElementById('anonymousChk').checked : true;
-            const name = document.getElementById('senderName') ? document.getElementById('senderName').value.trim() : '';
-            if(!content || content.trim()===''){ showStatus('漂流瓶不能是空的哦，写点什么吧','error'); return; }
-            showStatus('正在把漂流瓶扔进大海...','info');
-            try{
-                // increment Page Index on server and get number
-                const nextIdx = await incrementPageIndex();
-                const key = `bottle-${nextIdx}`;
-                let payload = content;
-                if(!anonymous && name) payload = content + '\n\n— ' + name;
+        // ===== 扔漂流瓶 =====
+        async function sendBottle() {
+            const content = $('bottleContent').value.trim();
+            const anonymous = $('anonymousChk')?.checked ?? true;
+            const name = $('senderName')?.value.trim() || '';
 
-                const res = await postKey(key, payload);
-                if(res && (res.status===1 || res.status==='1')){
-                    bottleContent.value=''; bottleCharCount.textContent='0';
-                    setNextIndex(nextIdx+1);
-                    // refresh total from server to ensure accurate count
-                    const total = await getPageIndex();
-                    todayCountEl.textContent = formatCount(total);
-                    showStatus('\uD83C\uDF89 漂流瓶已成功扔进大海','success');
-                }else{
-                    // if failed, roll back Page Index (best-effort)
-                    await setPageIndex(Math.max(0, (await getPageIndex()) - 1));
-                    showStatus('扔漂流瓶失败，再试试吧','error');
+            if (!content) {
+                showStatus('漂流瓶不能是空的哦', 'error');
+                return;
+            }
+
+            showStatus('正在扔漂流瓶...', 'info');
+
+            let payload = content;
+            if (!anonymous && name) payload += '\n\n— ' + name;
+
+            const cur = await getTotalBottles();
+            const nextIdx = cur + 1;
+            const key = `bottle-${nextIdx}`;
+
+            const res = await postKey(key, payload);
+            if (res && (res.status === 1 || res.status === '1')) {
+                await postKey('Page Index', String(nextIdx));
+                $('bottleContent').value = '';
+                $('bottleCharCount').textContent = '0';
+                totalBottles = nextIdx;
+                updateStats();
+                showStatus('🎉 漂流瓶已成功扔进大海', 'success');
+            } else {
+                showStatus('扔漂流瓶失败，再试试吧', 'error');
+            }
+        }
+
+        // ===== 捡漂流瓶 =====
+        async function pickBottle() {
+            showPickState('loading');
+
+            const pageIndex = await getTotalBottles();
+            totalBottles = pageIndex;
+            updateStats();
+
+            if (!pageIndex) {
+                showPickState('idle');
+                showStatus('海里还没有漂流瓶', 'warning');
+                return;
+            }
+
+            // 构建可用列表
+            const readSet = new Set(getReadBottles().filter(n => n >= 1 && n <= pageIndex));
+            const available = [];
+            for (let i = 1; i <= pageIndex; i++) {
+                if (!readSet.has(i)) available.push(i);
+            }
+
+            // 全部捡完
+            if (available.length === 0) {
+                showPickState('done');
+                return;
+            }
+
+            // 洗牌
+            for (let i = available.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [available[i], available[j]] = [available[j], available[i]];
+            }
+
+            let netFails = 0;
+
+            for (const idx of available) {
+                if (netFails >= 3) break;
+
+                const key = `bottle-${idx}`;
+                let content = null;
+                let ok = false;
+
+                try {
+                    const controller = new AbortController();
+                    const tid = setTimeout(() => controller.abort(), 8000);
+                    const resp = await fetch(`${API_GET}/${encodeURIComponent(key)}`, { signal: controller.signal });
+                    clearTimeout(tid);
+                    if (resp.ok) {
+                        ok = true;
+                        const t = await resp.text();
+                        if (t && t.trim() !== '') content = t;
+                    }
+                } catch(e) {
+                    ok = false;
                 }
-            }catch(e){ console.error(e); showStatus('网络错误','error'); }
-        }
 
-        // Pick bottle: read Page Index, then randomly pick within [1, pageIndex] excluding already-read stored in cookie
-        // seen contents dedupe using localStorage
-        function getSeenContents(){
-            try{
-                const s = localStorage.getItem('seenContents');
-                if(!s) return [];
-                const arr = JSON.parse(s);
-                if(!Array.isArray(arr)) return [];
-                return arr.map(x => String(x));
-            }catch(e){ return []; }
-        }
-        function addSeenContent(text){
-            try{
-                const t = (text || '').trim();
-                if(!t) return;
-                const arr = getSeenContents();
-                if(!arr.includes(t)) arr.push(t);
-                localStorage.setItem('seenContents', JSON.stringify(arr));
-            }catch(e){}
-        }
+                if (!ok) { netFails++; continue; }
 
-        async function pickBottle(){
-    const loadingState = document.getElementById('loadingState');
-    const emptyState = document.getElementById('emptyState');
-    const foundState = document.getElementById('foundState');
-    const messageMeta = document.getElementById('messageMeta');
-    loadingState.classList.remove('hidden'); emptyState.classList.add('hidden'); foundState.classList.add('hidden');
+                // 空瓶子标记已读跳过
+                if (!content) {
+                    addReadBottle(idx);
+                    continue;
+                }
 
-    const pageIndex = Number(await getPageIndex()) || 0;
-    if(!pageIndex){
-        loadingState.classList.add('hidden'); emptyState.classList.remove('hidden');
-        showStatus('当前没有可用的漂流瓶','warning');
-        return;
-    }
+                // 解析来源
+                let meta = '匿名';
+                const lines = content.split('\n');
+                const lastLine = lines[lines.length - 1];
+                if (lastLine && lastLine.startsWith('— ')) meta = lastLine.substring(2);
 
-    const readArr = getReadBottles();
-    const readFiltered = (readArr || []).filter(n => Number.isInteger(n) && n >= 1 && n <= pageIndex);
-    const readSet = new Set(readFiltered);
+                // 显示
+                $('bottleMessage').textContent = content;
+                $('messageMeta').textContent = '来自：' + meta;
+                showPickState('found');
 
-    const availableIds = [];
-    for(let i = 1; i <= pageIndex; i++){
-        if(!readSet.has(i)) availableIds.push(i);
-    }
-
-    if(availableIds.length === 0){
-        loadingState.classList.add('hidden'); emptyState.classList.remove('hidden');
-        showStatus('你已经看过所有漂流瓶啦','info');
-        return;
-    }
-
-    showStatus('正在从可用漂流瓶中随机抽取...');
-
-    const seenContents = getSeenContents();
-    const remainingIds = [...availableIds];
-    
-    // ===== 修复：添加重试计数器，防止无限循环 =====
-    let fetchFailCount = 0;
-    const MAX_FETCH_RETRIES = 5; // 连续失败上限
-
-    while(remainingIds.length > 0){
-        const pickIndex = Math.floor(Math.random() * remainingIds.length);
-        const idx = remainingIds.splice(pickIndex, 1)[0];
-        const key = `bottle-${idx}`;
-
-        let content = null;
-        let fetchSuccess = false; // 区分"成功但为空"和"请求失败"
-        
-        try{
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 8000);
-            const resp = await fetch(`${API_GET}/${encodeURIComponent(key)}`, { signal: controller.signal });
-            clearTimeout(timeoutId);
-            
-            if(resp.ok){
-                fetchSuccess = true;
-                const t = await resp.text();
-                if(t && t.trim() !== '') content = t;
+                // 记录
+                addReadBottle(idx);
+                addToHistory(idx, content, meta);
+                updateStats();
+                return;
             }
-        }catch(e){
-            console.log('fetch error', key, e && e.name ? e.name : e);
-            fetchSuccess = false;
-        }
 
-        // ===== 修复：只有请求成功但内容为空时才标记已读 =====
-        if(!fetchSuccess){
-            fetchFailCount++;
-            console.log('fetch failed for', key, 'not marking as read. failCount:', fetchFailCount);
-            // 不标记为已读，下次还能再试
-            if(fetchFailCount >= MAX_FETCH_RETRIES){
-                break; // 连续失败太多次，退出
+            // 循环结束没找到
+            updateStats();
+            const readArr = getReadBottles();
+            const validCount = readArr.filter(n => n >= 1 && n <= totalBottles).length;
+            if (validCount >= totalBottles) {
+                showPickState('done');
+            } else if (netFails >= 3) {
+                showPickState('idle');
+                showStatus('网络不太稳定，请稍后再试', 'warning');
+            } else {
+                showPickState('idle');
+                showStatus('没有找到可用的漂流瓶', 'info');
             }
-            continue;
         }
 
-        // 请求成功但内容为空 → 这个 key 确实没数据，标记已读避免重复尝试
-        if(!content){
-            console.log('empty content for', key, 'marking as read');
-            addReadBottle(idx);
-            continue;
-        }
+        // ===== 历史 =====
+        function renderHistory() {
+            const arr = getHistory();
+            $('historyCount').textContent = arr.length;
 
-        // 内容重复检测
-        const trimmed = content.trim();
-        if(seenContents.includes(trimmed)){
-            console.log('content already seen, skip', key);
-            addReadBottle(idx);
-            continue;
-        }
-
-        // 成功找到新内容
-        document.getElementById('bottleMessage').textContent = content;
-        let meta = '匿名';
-        const lines = content.split('\n');
-        const last = lines[lines.length - 1];
-        if(last && last.startsWith('— ')) meta = last.substring(2);
-        messageMeta.textContent = '来自：' + meta;
-
-        loadingState.classList.add('hidden'); emptyState.classList.add('hidden'); foundState.classList.remove('hidden');
-        pickCount++; localStorage.setItem('pickCount', String(pickCount)); yourPickCountEl.textContent = pickCount;
-
-        addReadBottle(idx);
-        addSeenContent(trimmed);
-        return;
-    }
-
-    loadingState.classList.add('hidden'); emptyState.classList.remove('hidden'); foundState.classList.add('hidden');
-    
-    if(fetchFailCount >= MAX_FETCH_RETRIES){
-        showStatus('网络似乎不太稳定，请稍后再试','warning');
-    } else {
-        showStatus('没有找到新的漂流瓶，稍后再来试试','warning');
-    }
-}
-
-
-        function throwBack(){ pickBottle(); }
-
-        // 历史功能已删除：toggleHistory/loadHistory/clearHistory 不再存在
-
-        // init
-        document.addEventListener('DOMContentLoaded', async ()=>{
-            // ensure next index exists
-            if(!localStorage.getItem('nextBottleIndex')) localStorage.setItem('nextBottleIndex','1');
-            const idx = await getPageIndex();
-            todayCountEl.textContent = formatCount(idx);
-            // ensure anonymous checkbox exists
-            const anon = document.getElementById('anonymousChk');
-            if(anon){
-                document.getElementById('senderName').disabled = anon.checked;
-                anon.addEventListener('change', (e)=>{ document.getElementById('senderName').disabled = e.target.checked; });
+            if (arr.length === 0) {
+                $('historyList').innerHTML = '';
+                $('historyEmpty').classList.remove('hidden');
+                return;
             }
+            $('historyEmpty').classList.add('hidden');
+            $('historyList').innerHTML = arr.map(item => `
+                <div class="bg-gray-50 border border-gray-100 rounded-xl p-4">
+                    <p class="text-sm text-gray-700 whitespace-pre-wrap mb-2">${escapeHtml(item.content)}</p>
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs text-gray-400">来自：${escapeHtml(item.from)}</span>
+                        <span class="text-xs text-gray-300">${item.time}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function clearHistory() {
+            if (!confirm('确定要清空所有历史记录和已读状态吗？')) return;
+            localStorage.removeItem('bottleHistory');
+            localStorage.removeItem('readBottles');
+            renderHistory();
+            updateStats();
+            showPickState('idle');
+            showStatus('已清空', 'info');
+        }
+
+        // ===== 定时刷新 =====
+        async function refreshTotal() {
+            const count = await getTotalBottles();
+            if (count !== totalBottles) {
+                totalBottles = count;
+                updateStats();
+                // 如果之前是 done 状态，现在有新瓶子了，切回 idle
+                if (!$('pickDone').classList.contains('hidden') && count > getReadBottles().filter(n => n >= 1 && n <= count).length) {
+                    showPickState('idle');
+                }
+            }
+        }
+
+        // ===== 初始化 =====
+        document.addEventListener('DOMContentLoaded', async () => {
+            // 清除旧数据
+            localStorage.removeItem('seenContents');
+            localStorage.removeItem('nextBottleIndex');
+            localStorage.removeItem('pickCount');
+
+            totalBottles = await getTotalBottles();
+            updateStats();
+
+            // 检查是否已捡完
+            checkPickDone();
+
+            // 匿名复选框
+            const anon = $('anonymousChk');
+            if (anon) {
+                $('senderName').disabled = anon.checked;
+                anon.addEventListener('change', e => {
+                    $('senderName').disabled = e.target.checked;
+                });
+            }
+
+            // 每分钟刷新
+            setInterval(refreshTotal, 60000);
         });
     </script>
 </body>
