@@ -370,71 +370,70 @@
             const messageMeta = document.getElementById('messageMeta');
             loadingState.classList.remove('hidden'); emptyState.classList.add('hidden'); foundState.classList.add('hidden');
 
-            const pageIndex = await getPageIndex();
-            if(!pageIndex || pageIndex == 0){
+            const pageIndex = Number(await getPageIndex()) || 0;
+            if(!pageIndex){
                 loadingState.classList.add('hidden'); emptyState.classList.remove('hidden'); showStatus('当前没有可用的漂流瓶','warning');
                 return;
             }
+
             const readArr = getReadBottles();
-            console.log('raw localStorage.readBottles:', localStorage.getItem('readBottles'));
-            console.log('parsed readArr:', readArr);
-            // only consider reads within current pageIndex range
-            const readFiltered = (readArr||[]).filter(n => Number.isInteger(n) && n>=1 && n<=pageIndex);
-            console.log('readFiltered (in range):', readFiltered);
+            const readFiltered = (readArr || []).filter(n => Number.isInteger(n) && n >= 1 && n <= pageIndex);
             const readSet = new Set(readFiltered);
 
-            // Build explicit list of available IDs (1..pageIndex excluding read)
             const availableIds = [];
-            for(let i=1;i<=pageIndex;i++){
+            for(let i = 1; i <= pageIndex; i++){
                 if(!readSet.has(i)) availableIds.push(i);
             }
-            let availableCount = availableIds.length;
-            if(availableCount <= 0 && pageIndex === pickCount){
-                loadingState.classList.add('hidden'); emptyState.classList.remove('hidden'); showStatus('你已经看过所有漂流瓶啦','info');
+
+            if(availableIds.length === 0){
+                loadingState.classList.add('hidden'); emptyState.classList.remove('hidden');
+                if(pageIndex === pickCount){
+                    showStatus('你已经看过所有漂流瓶啦','info');
+                } else {
+                    showStatus('没有找到可用的漂流瓶，稍后再来试试','warning');
+                }
                 return;
             }
 
             showStatus('正在从可用漂流瓶中随机抽取...');
-            console.log('pickBottle total:', pageIndex, 'readTotal:', readArr.length, 'readInRange:', readFiltered.length, 'available:', availableCount);
+            console.log('pickBottle total:', pageIndex, 'readInRange:', readFiltered.length, 'available:', availableIds.length);
 
             const seenContents = getSeenContents();
+            const remainingIds = [...availableIds];
 
-            // Try selecting from availableIds, removing candidates that are empty or already-seen
-            const maxAttempts = Math.min(availableCount, 1000);
-            for(let attempt=0; attempt<maxAttempts && availableIds.length>0; attempt++){
-                const r = Math.floor(Math.random() * availableIds.length);
-                const idx = availableIds[r];
+            while(remainingIds.length > 0){
+                const pickIndex = Math.floor(Math.random() * remainingIds.length);
+                const idx = remainingIds.splice(pickIndex, 1)[0];
                 const key = `bottle-${idx}`;
-                console.log('pickBottle trying', key, 'attempt', attempt+1, 'remainingCandidates', availableIds.length);
+                console.log('pickBottle trying', key, 'remainingCandidates', remainingIds.length);
 
-                // inline fetch with logging to bypass any fetchTextKey regression
                 let content = null;
                 try{
                     const controller = new AbortController();
-                    const timeoutId = setTimeout(()=> controller.abort(), 8000);
+                    const timeoutId = setTimeout(() => controller.abort(), 8000);
                     const resp = await fetch(`${API_GET}/${encodeURIComponent(key)}`, { signal: controller.signal });
                     clearTimeout(timeoutId);
                     console.log('fetch', key, 'status', resp.status);
                     if(resp.ok){
                         const t = await resp.text();
-                        if(t && t.trim()!=='') content = t;
+                        if(t && t.trim() !== '') content = t;
                     }
-                }catch(e){ console.log('fetch error', key, e && e.name ? e.name : e); }
+                }catch(e){
+                    console.log('fetch error', key, e && e.name ? e.name : e);
+                }
 
                 if(content){
                     const trimmed = content.trim();
                     if(seenContents.includes(trimmed)){
-                        console.debug('content already seen, removing candidate', key);
+                        console.log('content already seen, skip', key);
                         addReadBottle(idx);
-                        // remove this candidate
-                        availableIds.splice(r,1);
                         continue;
                     }
 
                     document.getElementById('bottleMessage').textContent = content;
                     let meta = '匿名';
                     const lines = content.split('\n');
-                    const last = lines[lines.length-1];
+                    const last = lines[lines.length - 1];
                     if(last && last.startsWith('— ')) meta = last.substring(2);
                     messageMeta.textContent = '来自：' + meta;
 
@@ -444,17 +443,18 @@
                     addReadBottle(idx);
                     addSeenContent(trimmed);
                     return;
-                } else {
-                    console.debug('pickBottle empty for', key, 'removing candidate');
-                    addReadBottle(idx);
-                    // remove this candidate
-                    availableIds.splice(r,1);
-                    continue;
                 }
+
+                console.log('no content for', key, 'skip');
+                addReadBottle(idx);
             }
 
             loadingState.classList.add('hidden'); emptyState.classList.remove('hidden'); foundState.classList.add('hidden');
-            showStatus('没有找到可用的漂流瓶，稍后再来试试','warning');
+            if(pageIndex === pickCount){
+                showStatus('你已经看过所有漂流瓶啦','info');
+            } else {
+                showStatus('没有找到可用的漂流瓶，稍后再来试试','warning');
+            }
         }
 
         function throwBack(){ pickBottle(); }
