@@ -383,7 +383,7 @@
                 if(!readSet.has(i)) availableIds.push(i);
             }
             let availableCount = availableIds.length;
-            if(availableCount == 0){
+            if(availableCount == pageIndex){
                 loadingState.classList.add('hidden'); emptyState.classList.remove('hidden'); showStatus('你已经看过所有漂流瓶啦','info');
                 return;
             }
