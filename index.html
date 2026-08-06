@@ -33,7 +33,8 @@
             .bottle-glass { background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); border:1px solid rgba(255,255,255,0.3);} 
             .input-focus { @apply focus:ring-2 focus:ring-primary/50 focus:border-primary focus:outline-none; }
             .btn-primary { @apply bg-gradient-to-r from-primary to-secondary text-white px-6 py-3 rounded-xl font-medium shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transform hover:-translate-y-0.5 transition-all duration-200; }
-            .btn-secondary { @apply bg-white/20 text-white px-6 py-3 rounded-xl font-medium border border-white/30 hover:bg-white/30 transform hover:-translate-y-0.5 transition-all duration-200; }
+            /* 深色次要按钮，增加对比 */
+            .btn-secondary { @apply bg-white/40 text-white px-6 py-3 rounded-xl font-medium border border-white/50 hover:bg-white/60 transform hover:-translate-y-0.5 transition-all duration-200; }
         }
     </style>
 </head>
@@ -132,6 +133,9 @@
                         </button>
                     </div>
 
+                </div>
+            </div>
+
                     <!-- History toggle -->
                     <div class="mt-6">
                         <button id="historyBtn" onclick="toggleHistory()" class="btn-secondary w-full">查看历史漂流瓶</button>
@@ -143,8 +147,6 @@
                             <div id="historyList" class="space-y-3 max-h-64 overflow-auto"></div>
                         </div>
                     </div>
-                </div>
-            </div>
 
             <div id="statusMessage" class="mt-6 hidden">
                 <div id="statusContent" class="p-4 rounded-xl text-sm"></div>
@@ -242,10 +244,15 @@
             setTimeout(()=>{ statusMessage.classList.add('hidden'); }, 3000);
         }
 
-        // format total count: if greater than 10 show '无限'
+        // escape HTML for safe history display
+        function escapeHtml(s){
+            if(!s) return '';
+            return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        }
+
+        // format total count: always show actual number
         function formatCount(n){
             const num = Number(n) || 0;
-            if(num > 10000) return '太多啦';
             return String(num);
         }
 
@@ -325,7 +332,9 @@
                 if(res && (res.status===1 || res.status==='1')){
                     bottleContent.value=''; bottleCharCount.textContent='0';
                     setNextIndex(nextIdx+1);
-                    todayCountEl.textContent = formatCount(nextIdx);
+                    // refresh total from server to ensure accurate count
+                    const total = await getPageIndex();
+                    todayCountEl.textContent = formatCount(total);
                     showStatus('\uD83C\uDF89 漂流瓶已成功扔进大海','success');
                 }else{
                     // if failed, roll back Page Index (best-effort)
@@ -364,6 +373,16 @@
             loadingState.classList.remove('hidden'); emptyState.classList.add('hidden'); foundState.classList.add('hidden');
 
             const pageIndex = await getPageIndex();
+            // Block picking if total exceeds 20 or user already picked 20
+            if(pageIndex > 10000){
+                loadingState.classList.add('hidden'); emptyState.classList.remove('hidden'); showStatus('总漂流瓶超过 20，暂不可捞取','warning');
+                return;
+            }
+            if(pickCount >= 10000){
+                loadingState.classList.add('hidden'); emptyState.classList.remove('hidden'); showStatus('你已捡到 20 个漂流瓶，暂不可继续捡取','warning');
+                return;
+            }
+
             if(!pageIndex || pageIndex <= 0){
                 loadingState.classList.add('hidden'); emptyState.classList.remove('hidden'); showStatus('当前没有可用的漂流瓶','warning');
                 return;
