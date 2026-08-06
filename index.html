@@ -54,7 +54,7 @@
                 </svg>
             </div>
             <h1 class="text-3xl font-bold text-white mb-2">漂流瓶</h1>
-            <p class="text-white/80">Wormwaker和Stars都是给</p>
+            <p class="text-white/80">Wormwaker是给</p>
         </div>
 
         <div class="bottle-glass rounded-3xl p-8 shadow-2xl">
@@ -364,98 +364,118 @@
         }
 
         async function pickBottle(){
-            const loadingState = document.getElementById('loadingState');
-            const emptyState = document.getElementById('emptyState');
-            const foundState = document.getElementById('foundState');
-            const messageMeta = document.getElementById('messageMeta');
-            loadingState.classList.remove('hidden'); emptyState.classList.add('hidden'); foundState.classList.add('hidden');
+    const loadingState = document.getElementById('loadingState');
+    const emptyState = document.getElementById('emptyState');
+    const foundState = document.getElementById('foundState');
+    const messageMeta = document.getElementById('messageMeta');
+    loadingState.classList.remove('hidden'); emptyState.classList.add('hidden'); foundState.classList.add('hidden');
 
-            const pageIndex = Number(await getPageIndex()) || 0;
-            if(!pageIndex){
-                loadingState.classList.add('hidden'); emptyState.classList.remove('hidden'); showStatus('当前没有可用的漂流瓶','warning');
-                return;
+    const pageIndex = Number(await getPageIndex()) || 0;
+    if(!pageIndex){
+        loadingState.classList.add('hidden'); emptyState.classList.remove('hidden');
+        showStatus('当前没有可用的漂流瓶','warning');
+        return;
+    }
+
+    const readArr = getReadBottles();
+    const readFiltered = (readArr || []).filter(n => Number.isInteger(n) && n >= 1 && n <= pageIndex);
+    const readSet = new Set(readFiltered);
+
+    const availableIds = [];
+    for(let i = 1; i <= pageIndex; i++){
+        if(!readSet.has(i)) availableIds.push(i);
+    }
+
+    if(availableIds.length === 0){
+        loadingState.classList.add('hidden'); emptyState.classList.remove('hidden');
+        showStatus('你已经看过所有漂流瓶啦','info');
+        return;
+    }
+
+    showStatus('正在从可用漂流瓶中随机抽取...');
+
+    const seenContents = getSeenContents();
+    const remainingIds = [...availableIds];
+    
+    // ===== 修复：添加重试计数器，防止无限循环 =====
+    let fetchFailCount = 0;
+    const MAX_FETCH_RETRIES = 5; // 连续失败上限
+
+    while(remainingIds.length > 0){
+        const pickIndex = Math.floor(Math.random() * remainingIds.length);
+        const idx = remainingIds.splice(pickIndex, 1)[0];
+        const key = `bottle-${idx}`;
+
+        let content = null;
+        let fetchSuccess = false; // 区分"成功但为空"和"请求失败"
+        
+        try{
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 8000);
+            const resp = await fetch(`${API_GET}/${encodeURIComponent(key)}`, { signal: controller.signal });
+            clearTimeout(timeoutId);
+            
+            if(resp.ok){
+                fetchSuccess = true;
+                const t = await resp.text();
+                if(t && t.trim() !== '') content = t;
             }
-
-            const readArr = getReadBottles();
-            const readFiltered = (readArr || []).filter(n => Number.isInteger(n) && n >= 1 && n <= pageIndex);
-            const readSet = new Set(readFiltered);
-
-            const availableIds = [];
-            for(let i = 1; i <= pageIndex; i++){
-                if(!readSet.has(i)) availableIds.push(i);
-            }
-
-            if(availableIds.length === 0){
-                loadingState.classList.add('hidden'); emptyState.classList.remove('hidden');
-                if(pageIndex === pickCount){
-                    showStatus('你已经看过所有漂流瓶啦','info');
-                } else {
-                    showStatus('没有找到可用的漂流瓶，稍后再来试试','warning');
-                }
-                return;
-            }
-
-            showStatus('正在从可用漂流瓶中随机抽取...');
-            console.log('pickBottle total:', pageIndex, 'readInRange:', readFiltered.length, 'available:', availableIds.length);
-
-            const seenContents = getSeenContents();
-            const remainingIds = [...availableIds];
-
-            while(remainingIds.length > 0){
-                const pickIndex = Math.floor(Math.random() * remainingIds.length);
-                const idx = remainingIds.splice(pickIndex, 1)[0];
-                const key = `bottle-${idx}`;
-                console.log('pickBottle trying', key, 'remainingCandidates', remainingIds.length);
-
-                let content = null;
-                try{
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 8000);
-                    const resp = await fetch(`${API_GET}/${encodeURIComponent(key)}`, { signal: controller.signal });
-                    clearTimeout(timeoutId);
-                    console.log('fetch', key, 'status', resp.status);
-                    if(resp.ok){
-                        const t = await resp.text();
-                        if(t && t.trim() !== '') content = t;
-                    }
-                }catch(e){
-                    console.log('fetch error', key, e && e.name ? e.name : e);
-                }
-
-                if(content){
-                    const trimmed = content.trim();
-                    if(seenContents.includes(trimmed)){
-                        console.log('content already seen, skip', key);
-                        addReadBottle(idx);
-                        continue;
-                    }
-
-                    document.getElementById('bottleMessage').textContent = content;
-                    let meta = '匿名';
-                    const lines = content.split('\n');
-                    const last = lines[lines.length - 1];
-                    if(last && last.startsWith('— ')) meta = last.substring(2);
-                    messageMeta.textContent = '来自：' + meta;
-
-                    loadingState.classList.add('hidden'); emptyState.classList.add('hidden'); foundState.classList.remove('hidden');
-                    pickCount++; localStorage.setItem('pickCount', String(pickCount)); yourPickCountEl.textContent = pickCount;
-
-                    addReadBottle(idx);
-                    addSeenContent(trimmed);
-                    return;
-                }
-
-                console.log('no content for', key, 'skip');
-                addReadBottle(idx);
-            }
-
-            loadingState.classList.add('hidden'); emptyState.classList.remove('hidden'); foundState.classList.add('hidden');
-            if(pageIndex === pickCount){
-                showStatus('你已经看过所有漂流瓶啦','info');
-            } else {
-                showStatus('没有找到可用的漂流瓶，稍后再来试试','warning');
-            }
+        }catch(e){
+            console.log('fetch error', key, e && e.name ? e.name : e);
+            fetchSuccess = false;
         }
+
+        // ===== 修复：只有请求成功但内容为空时才标记已读 =====
+        if(!fetchSuccess){
+            fetchFailCount++;
+            console.log('fetch failed for', key, 'not marking as read. failCount:', fetchFailCount);
+            // 不标记为已读，下次还能再试
+            if(fetchFailCount >= MAX_FETCH_RETRIES){
+                break; // 连续失败太多次，退出
+            }
+            continue;
+        }
+
+        // 请求成功但内容为空 → 这个 key 确实没数据，标记已读避免重复尝试
+        if(!content){
+            console.log('empty content for', key, 'marking as read');
+            addReadBottle(idx);
+            continue;
+        }
+
+        // 内容重复检测
+        const trimmed = content.trim();
+        if(seenContents.includes(trimmed)){
+            console.log('content already seen, skip', key);
+            addReadBottle(idx);
+            continue;
+        }
+
+        // 成功找到新内容
+        document.getElementById('bottleMessage').textContent = content;
+        let meta = '匿名';
+        const lines = content.split('\n');
+        const last = lines[lines.length - 1];
+        if(last && last.startsWith('— ')) meta = last.substring(2);
+        messageMeta.textContent = '来自：' + meta;
+
+        loadingState.classList.add('hidden'); emptyState.classList.add('hidden'); foundState.classList.remove('hidden');
+        pickCount++; localStorage.setItem('pickCount', String(pickCount)); yourPickCountEl.textContent = pickCount;
+
+        addReadBottle(idx);
+        addSeenContent(trimmed);
+        return;
+    }
+
+    loadingState.classList.add('hidden'); emptyState.classList.remove('hidden'); foundState.classList.add('hidden');
+    
+    if(fetchFailCount >= MAX_FETCH_RETRIES){
+        showStatus('网络似乎不太稳定，请稍后再试','warning');
+    } else {
+        showStatus('没有找到新的漂流瓶，稍后再来试试','warning');
+    }
+}
+
 
         function throwBack(){ pickBottle(); }
 
