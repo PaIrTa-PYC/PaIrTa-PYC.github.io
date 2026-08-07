@@ -623,6 +623,9 @@
     </footer>
 
     <script>
+          document.addEventListener('contextmenu',
+        event => event.preventDefault()
+        );
         // 刷新后始终回到顶部
         window.addEventListener('DOMContentLoaded', () => {
             window.scrollTo(0, 0);
