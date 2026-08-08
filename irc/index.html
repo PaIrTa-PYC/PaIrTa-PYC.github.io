@@ -252,6 +252,7 @@ let prevOnlineSet = new Set();
 let isInRoom = false;
 let roomHasPass = false;
 let isHall = false;
+let joinMsgPending = false; // ★ 新增：标记是否需要在底部显示进入提示
 
 // ===== UTILS =====
 const $=id=>document.getElementById(id);
@@ -260,6 +261,13 @@ function rnd(n=24){const c='0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOP
 function hc(s){let h=0;for(let i=0;i<s.length;i++)h=s.charCodeAt(i)+((h<<5)-h);const C=['#6c5ce7','#00cec9','#fd79a8','#fdcb6e','#e17055','#0984e3','#00b894','#e84393','#a29bfe','#55efc4','#fab1a0','#74b9ff','#ff7675'];return C[Math.abs(h)%C.length]}
 function esc(s){const d=document.createElement('div');d.textContent=String(s);return d.innerHTML}
 function ft(ts){const d=new Date(ts);return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')}
+
+// ★ 新增：检测用户名中的非法不可见字符
+function hasInvalidNickChars(str) {
+  // 禁止 Unicode Tag 字符 (U+E0000–U+E007F)、零宽字符、BOM 等
+  const re = /[\u{E0000}-\u{E007F}\u200B\u200C\u200D\u200E\u200F\uFEFF\u00AD\u2060\u2061\u2062\u2063\u2064\u2066\u2067\u2068\u2069]/u;
+  return re.test(str);
+}
 
 function safeDecode(str) {
   if (typeof str !== 'string') return String(str || '');
@@ -545,6 +553,8 @@ async function join() {
   const p = $('iPass').value.trim();
 
   if (!n) { toast('请输入昵称','err'); return; }
+  // ★ 新增：检测非法字符
+  if (hasInvalidNickChars(n)) { toast('昵称包含非法字符，请修改','err'); return; }
   if (!r) { toast('请输入房间号','err'); return; }
 
   if (r === HALL_ROOM_ID) {
@@ -614,6 +624,7 @@ async function join() {
 
     isInRoom = true;
     prevOnlineSet = new Set();
+    joinMsgPending = true; // ★ 标记需要显示进入提示
     enterChat();
 
   } catch(e) {
@@ -627,6 +638,8 @@ async function join() {
 async function joinHall() {
   const n = $('iNick').value.trim();
   if (!n) { toast('请输入昵称','err'); return; }
+  // ★ 新增：检测非法字符
+  if (hasInvalidNickChars(n)) { toast('昵称包含非法字符','err'); return; }
 
   nick = n;
   room = HALL_ROOM_ID;
@@ -663,6 +676,7 @@ async function joinHall() {
 
     isInRoom = true;
     prevOnlineSet = new Set();
+    joinMsgPending = true; // ★ 标记需要显示进入提示
     enterChat();
 
   } catch(e) {
@@ -690,11 +704,7 @@ function enterChat() {
 
   updatePresence();
 
-  if (isHall) {
-    appendSysMsg(nick + ' 进入了大厅', 'join');
-  } else {
-    appendSysMsg(nick + ' 加入了房间', 'join');
-  }
+  // ★ 不再在此处 appendSysMsg，改为 poll 成功后在底部追加
 
   poll();
   timer = setInterval(poll, POLL_MS);
@@ -738,6 +748,7 @@ async function doLeave() {
   prevOnlineSet = new Set();
   roomHasPass = false;
   isHall = false;
+  joinMsgPending = false;
 }
 
 // ===== POLL =====
@@ -763,10 +774,39 @@ async function poll() {
       }
       render(msgs);
       $('cMeta').textContent = msgs.length + ' 条消息 · 轮询中';
+    } else {
+      // 即使没有新消息，首次也需要渲染
+      if (joinMsgPending) {
+        // 如果消息列表为空（无历史），也直接显示进入提示
+        const w = $('msgs');
+        if (w.querySelector('.empty')) {
+          // 保持 empty 状态，进入提示追加在下面
+        }
+      }
     }
+
+      // ★ 在消息加载/渲染后，将进入提示追加到最底部
+    if (joinMsgPending) {
+      joinMsgPending = false;
+      if (isHall) {
+        appendSysMsg(nick + ' 进入了大厅', 'join');
+      } else {
+        appendSysMsg(nick + ' 加入了房间', 'join');
+      }
+    }
+
     readPresence();
   } catch(e) {
     $('cMeta').textContent = '连接中… 重试';
+    // 即使连接失败，也显示进入提示（在底部）
+    if (joinMsgPending) {
+      joinMsgPending = false;
+      if (isHall) {
+        appendSysMsg(nick + ' 进入了大厅', 'join');
+      } else {
+        appendSysMsg(nick + ' 加入了房间', 'join');
+      }
+    }
   }
 }
 
