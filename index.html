@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,19 +12,36 @@
         }
 
         :root {
-            --bg-primary: #0a0a0f;
-            --bg-secondary: #12121a;
-            --bg-card: #1a1a2e;
             --accent: #6c63ff;
             --accent-light: #8b83ff;
             --accent-glow: rgba(108, 99, 255, 0.3);
-            --text-primary: #e8e8e8;
-            --text-secondary: #a0a0b0;
-            --text-muted: #6a6a7a;
-            --border: #2a2a3e;
             --gradient-1: linear-gradient(135deg, #6c63ff, #e942f5);
             --gradient-2: linear-gradient(135deg, #f97316, #ef4444);
             --gradient-3: linear-gradient(135deg, #06b6d4, #3b82f6);
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #0a0a14;
+            --bg-secondary: #12121f;
+            --bg-card: #1a1a2e;
+            --text-primary: #eeeef5;
+            --text-secondary: #9d9db5;
+            --text-muted: #55556e;
+            --border: rgba(255, 255, 255, 0.06);
+            --nav-bg: rgba(10, 10, 20, 0.8);
+            --blob-opacity: 0.14;
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #f0f0f8;
+            --bg-secondary: #e8e8f2;
+            --bg-card: #ffffff;
+            --text-primary: #1a1a2e;
+            --text-secondary: #4a4a6a;
+            --text-muted: #8a8aa0;
+            --border: rgba(0, 0, 0, 0.08);
+            --nav-bg: rgba(240, 240, 248, 0.85);
+            --blob-opacity: 0.18;
         }
 
         html {
@@ -37,28 +54,56 @@
             color: var(--text-primary);
             line-height: 1.6;
             overflow-x: hidden;
+            transition: background-color 0.4s ease, color 0.4s ease;
         }
 
-        /* 全屏背景动画 */
-        body::before {
-            content: '';
+        /* NexusChat 风格背景 */
+        .bg {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: radial-gradient(ellipse at 30% 20%, rgba(108, 99, 255, 0.1) 0%, transparent 50%),
-                        radial-gradient(ellipse at 70% 80%, rgba(233, 66, 245, 0.06) 0%, transparent 50%),
-                        radial-gradient(ellipse at 50% 50%, rgba(108, 99, 255, 0.03) 0%, transparent 70%);
-            animation: float 20s ease-in-out infinite;
+            inset: 0;
             z-index: 0;
             pointer-events: none;
+            overflow: hidden;
         }
 
-        @keyframes float {
-            0%, 100% { transform: translate(0, 0) scale(1); }
-            33% { transform: translate(30px, -30px) scale(1.02); }
-            66% { transform: translate(-20px, 20px) scale(0.98); }
+        .bg i {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: var(--blob-opacity);
+            animation: fl 20s ease-in-out infinite alternate;
+        }
+
+        .bg i:nth-child(1) {
+            width: 520px;
+            height: 520px;
+            background: #6c5ce7;
+            top: -12%;
+            left: -6%;
+        }
+
+        .bg i:nth-child(2) {
+            width: 420px;
+            height: 420px;
+            background: #00cec9;
+            bottom: -10%;
+            right: -6%;
+            animation-delay: -7s;
+        }
+
+        .bg i:nth-child(3) {
+            width: 300px;
+            height: 300px;
+            background: #fd79a8;
+            top: 45%;
+            left: 55%;
+            animation-delay: -13s;
+        }
+
+        @keyframes fl {
+            0% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(35px, -25px) scale(1.08); }
+            100% { transform: translate(-20px, 30px) scale(0.94); }
         }
 
         /* 导航栏 */
@@ -69,7 +114,7 @@
             right: 0;
             z-index: 1000;
             padding: 1rem 2rem;
-            background: rgba(10, 10, 15, 0.8);
+            background: var(--nav-bg);
             backdrop-filter: blur(20px);
             border-bottom: 1px solid var(--border);
             transition: all 0.3s ease;
@@ -77,7 +122,7 @@
 
         nav.scrolled {
             padding: 0.7rem 2rem;
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
         }
 
         .nav-container {
@@ -101,6 +146,7 @@
             display: flex;
             gap: 2rem;
             list-style: none;
+            align-items: center;
         }
 
         .nav-links a {
@@ -129,6 +175,54 @@
 
         .nav-links a:hover::after {
             width: 100%;
+        }
+
+        /* ===== 主题开关 ===== */
+        .theme-switch {
+            position: relative;
+            width: 52px;
+            height: 28px;
+            cursor: pointer;
+        }
+
+        .theme-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .switch-slider {
+            position: absolute;
+            inset: 0;
+            background: var(--bg-card);
+            border: 1.5px solid var(--border);
+            border-radius: 20px;
+            transition: all 0.35s ease;
+        }
+
+        .switch-slider::before {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            top: 50%;
+            left: 3px;
+            transform: translateY(-50%);
+            background: var(--accent);
+            box-shadow: 0 2px 8px var(--accent-glow);
+            transition: all 0.35s cubic-bezier(0.68, -0.3, 0.32, 1.3);
+        }
+
+        .theme-switch input:checked + .switch-slider::before {
+            left: calc(100% - 23px);
+            background: #f59e0b;
+            box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4);
+        }
+
+        .theme-switch:hover .switch-slider {
+            border-color: var(--accent);
+            box-shadow: 0 0 10px var(--accent-glow);
         }
 
         /* 英雄区 - 全屏 */
@@ -234,6 +328,7 @@
             border: 1px solid var(--border);
             position: relative;
             overflow: hidden;
+            transition: background 0.4s ease, border-color 0.4s ease;
         }
 
         .announcement-box::before {
@@ -293,13 +388,13 @@
             border-radius: 20px;
             border: 1px solid var(--border);
             overflow: hidden;
-            transition: all 0.3s ease;
+            transition: all 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
         }
 
         .project-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+            transform: translateY(-8px);
             border-color: var(--accent);
+            box-shadow: 0 10px 30px var(--accent-glow), 0 0 20px var(--accent-glow);
         }
 
         .project-image {
@@ -380,6 +475,7 @@
             display: flex;
             align-items: center;
             gap: 0.8rem;
+            cursor: pointer;
         }
 
         .contact-card:hover {
@@ -390,6 +486,11 @@
 
         .contact-card .icon {
             font-size: 1.5rem;
+        }
+
+        .contact-card .label {
+            font-weight: 600;
+            font-size: 0.95rem;
         }
 
         /* 页脚 */
@@ -405,6 +506,45 @@
 
         footer .heart {
             color: #ef4444;
+        }
+
+        /* Toast 提示 */
+        .toast-container {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .toast {
+            padding: 12px 20px;
+            border-radius: 12px;
+            background: var(--bg-card);
+            border: 1px solid var(--accent);
+            color: var(--text-primary);
+            font-size: 0.85rem;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+            animation: toastIn 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .toast.hide {
+            animation: toastOut 0.3s ease forwards;
+        }
+
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateX(30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes toastOut {
+            from { opacity: 1; transform: translateX(0); }
+            to { opacity: 0; transform: translateX(30px); }
         }
 
         /* 动画 */
@@ -436,6 +576,11 @@
             .section-header h2 {
                 font-size: 2rem;
             }
+
+            .contact-cards {
+                flex-direction: column;
+                align-items: center;
+            }
         }
 
         /* 滚动条 */
@@ -458,6 +603,12 @@
     </style>
 </head>
 <body>
+    <!-- NexusChat 风格背景 -->
+    <div class="bg"><i></i><i></i><i></i></div>
+
+    <!-- Toast 容器 -->
+    <div class="toast-container" id="toastContainer"></div>
+
     <!-- 导航栏 -->
     <nav id="navbar">
         <div class="nav-container">
@@ -467,6 +618,12 @@
                 <li><a href="#projects">个人项目</a></li>
                 <li><a href="#announcement">公告</a></li>
                 <li><a href="#contact">联系我</a></li>
+                <li>
+                    <label class="theme-switch">
+                        <input type="checkbox" id="themeToggle" onchange="toggleTheme()">
+                        <span class="switch-slider"></span>
+                    </label>
+                </li>
             </ul>
         </div>
     </nav>
@@ -494,7 +651,7 @@
                 <div class="project-info">
                     <h3>漂流瓶</h3>
                     <p>一个漂流瓶网页，写下你的心事投入大海</p>
-                    <a href="./bottle/index.html" class="project-btn">访问网站</a>
+                    <a href="./bottle/index.html" class="project-btn" target="_blank">访问网站</a>
                 </div>
             </div>
             <div class="project-card fade-in">
@@ -502,7 +659,7 @@
                 <div class="project-info">
                     <h3>NexusChat 聊天室</h3>
                     <p>一个实时在线聊天室，支持多人同时在线交流，简洁轻量的聊天体验</p>
-                    <a href="./irc/index.html" class="project-btn">访问网站</a>
+                    <a href="./irc/index.html" class="project-btn" target="_blank">访问网站</a>
                 </div>
             </div>
         </div>
@@ -531,12 +688,18 @@
             <p></p>
         </div>
         <div class="contact-cards fade-in">
-            <a href="https://github.com/PaIrTa-PYC" class="contact-card">
-                <span>GitHub</span>
+            <a href="https://github.com/PaIrTa-PYC" class="contact-card" target="_blank">
+                <span class="label">GitHub</span>
             </a>
-            <a href="https://space.bilibili.com/652131791" class="contact-card">
-                <span>Bilibili</span>
+            <a href="https://space.bilibili.com/652131791" class="contact-card" target="_blank">
+                <span class="label">Bilibili</span>
             </a>
+            <div class="contact-card" onclick="copyToClipboard('3834554060', 'QQ号')">
+                <span class="label">QQ</span>
+            </div>
+            <div class="contact-card" onclick="copyToClipboard('3834554060@qq.com', 'Email')">
+                <span class="label">Email</span>
+            </div>
         </div>
     </section>
 
@@ -546,9 +709,9 @@
     </footer>
 
     <script>
-        document.addEventListener('contextmenu',
-        event => event.preventDefault()
-);
+        // 禁止右键
+        document.addEventListener('contextmenu', event => event.preventDefault());
+
         // 刷新后始终回到顶部
         window.addEventListener('DOMContentLoaded', () => {
             window.scrollTo(0, 0);
@@ -557,7 +720,62 @@
             history.scrollRestoration = 'manual';
         }
 
-        // 打字删除动画
+        // ===== 主题切换 =====
+        function toggleTheme() {
+            const html = document.documentElement;
+            const checkbox = document.getElementById('themeToggle');
+            if (checkbox.checked) {
+                html.setAttribute('data-theme', 'light');
+                localStorage.setItem('theme', 'light');
+            } else {
+                html.setAttribute('data-theme', 'dark');
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+
+        // 初始化主题
+        (function() {
+            const saved = localStorage.getItem('theme');
+            const checkbox = document.getElementById('themeToggle');
+            if (saved === 'light') {
+                document.documentElement.setAttribute('data-theme', 'light');
+                checkbox.checked = true;
+            } else {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                checkbox.checked = false;
+            }
+        })();
+
+        // ===== 复制到剪贴板 =====
+        function copyToClipboard(text, label) {
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('✅ ' + label + ' 已复制: ' + text);
+            }).catch(() => {
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                ta.style.position = 'fixed';
+                ta.style.left = '-9999px';
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                showToast('✅ ' + label + ' 已复制: ' + text);
+            });
+        }
+
+        function showToast(msg) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = msg;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.classList.add('hide');
+                setTimeout(() => toast.remove(), 300);
+            }, 2500);
+        }
+
+        // ===== 打字删除动画 =====
         const names = ['PaIrTa_PYC', '琳沐ou'];
         let nameIndex = 0;
         let charIndex = 0;
@@ -604,7 +822,7 @@
 
         typeEffect();
 
-        // 获取公告
+        // ===== 获取公告 =====
         async function fetchAnnouncement() {
             const container = document.getElementById('announcement-content');
             try {
@@ -626,7 +844,7 @@
 
         fetchAnnouncement();
 
-        // 导航栏滚动效果
+        // ===== 导航栏滚动效果 =====
         window.addEventListener('scroll', () => {
             const nav = document.getElementById('navbar');
             if (window.scrollY > 50) {
@@ -636,7 +854,7 @@
             }
         });
 
-        // 滚动渐入动画
+        // ===== 滚动渐入动画 =====
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
@@ -652,7 +870,7 @@
             observer.observe(el);
         });
 
-        // 平滑滚动
+        // ===== 平滑滚动 =====
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function(e) {
                 e.preventDefault();
