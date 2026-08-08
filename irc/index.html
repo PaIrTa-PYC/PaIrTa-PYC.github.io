@@ -701,11 +701,8 @@ function enterChat() {
   updatePresence();
 
  if (isHall) {
-    showCenterTip(nick + ' 进入了大厅');
-} else {
-    showCenterTip(nick + ' 加入了房间');
-}
-
+    showCenterTip(nick + ' 进入了房间');
+ }
   poll();
   timer = setInterval(poll, POLL_MS);
   hbTimer = setInterval(updatePresence, HEARTBEAT_MS);
