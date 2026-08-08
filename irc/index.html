@@ -29,7 +29,6 @@ body{
 .screen{display:none;width:100%;height:100%;position:relative;z-index:1}
 .screen.on{display:flex}
 
-/* ===== LOBBY ===== */
 #lobby{align-items:center;justify-content:center}
 .card{
   background:var(--bg2);border:1px solid var(--border);border-radius:22px;
@@ -59,7 +58,6 @@ body{
 }
 .btn-go:hover{transform:translateY(-2px);box-shadow:0 6px 22px var(--glow)}
 .btn-go:disabled{opacity:.5;cursor:not-allowed;transform:none}
-
 .btn-hall{
   width:100%;padding:13px;border:none;border-radius:10px;margin-top:10px;
   background:linear-gradient(135deg,var(--green),#00b894);
@@ -68,30 +66,31 @@ body{
 }
 .btn-hall:hover{transform:translateY(-2px);box-shadow:0 6px 22px rgba(0,206,201,.3)}
 .btn-hall:disabled{opacity:.5;cursor:not-allowed;transform:none}
-
 .card .note{margin-top:20px;font-size:11px;color:var(--t3);line-height:1.7}
-
 .fg .pass-wrap{position:relative}
 .fg .pass-wrap input{padding-right:40px}
 .fg .pass-wrap .lock-ico{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:14px;opacity:.4}
 
-/* ===== 管理员标识 ===== */
+/* 管理员渐变标识 */
 .dev-badge{
-  background:linear-gradient(135deg,#f9ca24,#f0932b,#eb4d4b,#6c5ce7);
+  background:linear-gradient(90deg,#f9ca24,#f0932b,#eb4d4b,#6c5ce7,#00cec9);
+  background-size:200% auto;
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;
   background-clip:text;
-  font-weight:900;font-size:inherit;
+  font-weight:900;
+  animation:devShine 3s linear infinite;
 }
+@keyframes devShine{0%{background-position:0% center}100%{background-position:200% center}}
 
-/* ===== 右键菜单 ===== */
+/* 右键菜单 */
 .ctx-menu{
   position:fixed;z-index:9999;background:var(--bg2);border:1px solid var(--border);
-  border-radius:10px;box-shadow:var(--shadow);padding:6px 0;min-width:140px;
+  border-radius:10px;box-shadow:var(--shadow);padding:6px 0;min-width:150px;
   animation:ctxIn .15s ease;
 }
 @keyframes ctxIn{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:none}}
 .ctx-menu .ctx-item{
-  padding:8px 16px;font-size:12px;color:var(--t1);cursor:pointer;display:flex;align-items:center;gap:8px;
+  padding:9px 16px;font-size:12px;color:var(--t1);cursor:pointer;display:flex;align-items:center;gap:8px;
 }
 .ctx-menu .ctx-item:hover{background:var(--bg3)}
 .ctx-menu .ctx-item.danger{color:var(--red)}
@@ -99,7 +98,6 @@ body{
 .ctx-menu .ctx-item.warn{color:var(--orange)}
 .ctx-menu .ctx-item.warn:hover{background:rgba(253,203,110,.1)}
 
-/* ===== CHAT ===== */
 #chat{flex-direction:column;height:100vh}
 .bar{
   display:flex;align-items:center;gap:10px;padding:10px 18px;
@@ -117,9 +115,6 @@ body{
   background:rgba(255,118,117,.08);color:var(--red);font-size:12px;font-weight:600;cursor:pointer;
 }
 .btn-out:hover{background:rgba(255,118,117,.18)}
-
-.room-lock{font-size:12px;opacity:.5;margin-left:4px}
-
 .online-badge{
   display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:8px;
   background:rgba(0,206,201,.08);border:1px solid rgba(0,206,201,.2);
@@ -150,7 +145,7 @@ body{
 
 .m{display:flex;gap:10px;padding:5px 0;animation:mi .3s ease}
 @keyframes mi{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
-.m .av{width:36px;height:36px;border-radius:11px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;margin-top:2px}
+.m .av{width:36px;height:36px;border-radius:11px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;margin-top:2px;cursor:default}
 .m .bd{flex:1;min-width:0}
 .m .hd{display:flex;align-items:baseline;gap:7px;margin-bottom:2px}
 .m .au{font-size:13px;font-weight:700}
@@ -218,7 +213,7 @@ body{
   <div class="fg">
     <label>管理员密码 <span style="font-weight:400;text-transform:none;opacity:.6">(可选)</span></label>
     <div class="pass-wrap">
-      <input id="iAdmin" type="password" maxlength="32" placeholder="管理员密码" autocomplete="off">
+      <input id="iAdmin" type="password" maxlength="32" placeholder="管理员专用" autocomplete="off">
       <span class="lock-ico">🛡️</span>
     </div>
   </div>
@@ -281,6 +276,7 @@ const ADMIN_PASS = '141220177';
 // ===== STATE =====
 let nick='', room='', idxKey='', presenceKey='', passKey='', color='', timer=null, hbTimer=null, lastSig='', busy=false;
 let cache = {};
+let msgIdMap = [];  // 保存当前渲染的消息ID顺序
 let onlineUsers = {};
 let prevOnlineSet = new Set();
 let isInRoom = false;
@@ -300,11 +296,10 @@ function showCtxMenu(x, y, items) {
     const div = document.createElement('div');
     div.className = 'ctx-item ' + (item.cls || '');
     div.innerHTML = item.icon + ' ' + item.text;
-    div.onclick = (e) => { e.stopPropagation(); hideCtxMenu(); item.action(); };
+    div.addEventListener('click', (e) => { e.stopPropagation(); hideCtxMenu(); item.action(); });
     menu.appendChild(div);
   });
   document.body.appendChild(menu);
-  // 边界检测
   const rect = menu.getBoundingClientRect();
   if (x + rect.width > window.innerWidth) x = window.innerWidth - rect.width - 8;
   if (y + rect.height > window.innerHeight) y = window.innerHeight - rect.height - 8;
@@ -361,25 +356,6 @@ function writeKV(key, value) {
     img.src = url;
     setTimeout(fin, 4000);
   });
-}
-
-function writeKVBeacon(key, value) {
-  const url = BASE + '/update/?key=' + encodeURIComponent(key) + '&value=' + encodeURIComponent(value);
-  try {
-    if (navigator.sendBeacon) {
-      navigator.sendBeacon(url);
-      return true;
-    }
-  } catch(_){}
-  try {
-    const xhr = new XMLHttpRequest();
-    xhr.open('GET', url, false);
-    xhr.send();
-    return true;
-  } catch(_){}
-  const img = new Image();
-  img.src = url;
-  return true;
 }
 
 const PROXIES = [
@@ -505,6 +481,58 @@ function appendSysMsg(text, type) {
   w.scrollTop = w.scrollHeight;
 }
 
+// ===== 管理员功能 =====
+async function kickUser(targetNick) {
+  try {
+    let data = {};
+    try {
+      const cur = await readKey(presenceKey);
+      if (cur && typeof cur === 'object' && !Array.isArray(cur)) data = cur;
+    } catch(_){}
+
+    delete data[targetNick];
+    await writeKV(presenceKey, JSON.stringify(data));
+
+    const msgId = rnd(24);
+    const body = JSON.stringify({ sys: '🚫 ' + targetNick + ' 被管理员踢出了房间' });
+    await writeKV(msgId, body);
+
+    let ids = [];
+    try {
+      const cur2 = await readKey(idxKey);
+      if (Array.isArray(cur2)) ids = cur2;
+    } catch(_){}
+    ids.push(msgId);
+    if (ids.length > MAX_MSG) ids = ids.slice(ids.length - MAX_MSG);
+    await writeKV(idxKey, JSON.stringify(ids));
+
+    lastSig = '';
+    poll();
+    toast('已踢出 ' + targetNick, 'ok');
+  } catch(e) {
+    toast('踢出失败: ' + e.message, 'err');
+  }
+}
+
+async function deleteMsg(msgId) {
+  try {
+    let ids = [];
+    try {
+      const cur = await readKey(idxKey);
+      if (Array.isArray(cur)) ids = cur;
+    } catch(_){}
+
+    const newIds = ids.filter(id => id !== msgId);
+    await writeKV(idxKey, JSON.stringify(newIds));
+    delete cache[msgId];
+    lastSig = '';
+    poll();
+    toast('消息已撤回', 'ok');
+  } catch(e) {
+    toast('撤回失败: ' + e.message, 'err');
+  }
+}
+
 // ===== 离开房间处理 =====
 async function removeFromPresence(wasHall) {
   try {
@@ -513,14 +541,11 @@ async function removeFromPresence(wasHall) {
       const cur = await readKey(presenceKey);
       if (cur && typeof cur === 'object' && !Array.isArray(cur)) data = cur;
     } catch(_){}
-
     delete data[nick];
-
     const now = Date.now();
     for (const k in data) {
       if (now - data[k] > PRESENCE_TIMEOUT) delete data[k];
     }
-
     if (!wasHall && Object.keys(data).length === 0) {
       await writeKV(idxKey, JSON.stringify([]));
       await writeKV(presenceKey, JSON.stringify({}));
@@ -544,70 +569,39 @@ function removeFromPresenceSync(wasHall) {
         if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) data = parsed;
       }
     } catch(_){}
-
     delete data[nick];
-
     const now = Date.now();
     for (const k in data) {
       if (now - data[k] > PRESENCE_TIMEOUT) delete data[k];
     }
-
     const val = JSON.stringify(data);
     const url = BASE + '/update/?key=' + encodeURIComponent(presenceKey) + '&value=' + encodeURIComponent(val);
-
-    if (navigator.sendBeacon) {
-      navigator.sendBeacon(url);
-    } else {
-      try {
-        const xhr2 = new XMLHttpRequest();
-        xhr2.open('GET', url, false);
-        xhr2.timeout = 3000;
-        xhr2.send();
-      } catch(_){}
+    if (navigator.sendBeacon) { navigator.sendBeacon(url); }
+    else {
+      try { const xhr2 = new XMLHttpRequest(); xhr2.open('GET', url, false); xhr2.timeout = 3000; xhr2.send(); } catch(_){}
     }
-
     if (!wasHall && Object.keys(data).length === 0) {
       const clearUrl = BASE + '/update/?key=' + encodeURIComponent(idxKey) + '&value=' + encodeURIComponent(JSON.stringify([]));
-      if (navigator.sendBeacon) {
-        navigator.sendBeacon(clearUrl);
-      } else {
-        try {
-          const xhr3 = new XMLHttpRequest();
-          xhr3.open('GET', clearUrl, false);
-          xhr3.timeout = 3000;
-          xhr3.send();
-        } catch(_){}
+      if (navigator.sendBeacon) { navigator.sendBeacon(clearUrl); }
+      else {
+        try { const xhr3 = new XMLHttpRequest(); xhr3.open('GET', clearUrl, false); xhr3.timeout = 3000; xhr3.send(); } catch(_){}
       }
     }
   } catch(_){}
 }
 
-function getOnlineCount() {
-  return Object.keys(onlineUsers).length;
-}
+function getOnlineCount() { return Object.keys(onlineUsers).length; }
 
-// ===== beforeunload =====
 window.addEventListener('beforeunload', function(e) {
   if (!isInRoom) return;
   if (isHall) return;
-
   const cnt = getOnlineCount();
-  if (cnt > 1) {
-    e.preventDefault();
-    e.returnValue = '你将会离开房间！';
-    return e.returnValue;
-  } else {
-    e.preventDefault();
-    e.returnValue = '房间将关闭并清除数据！';
-    return e.returnValue;
-  }
+  if (cnt > 1) { e.preventDefault(); e.returnValue = '你将会离开房间！'; return e.returnValue; }
+  else { e.preventDefault(); e.returnValue = '房间将关闭并清除数据！'; return e.returnValue; }
 });
 
 window.addEventListener('pagehide', () => {
-  if (isInRoom) {
-    removeFromPresenceSync(isHall);
-    isInRoom = false;
-  }
+  if (isInRoom) { removeFromPresenceSync(isHall); isInRoom = false; }
 });
 
 // ===== LOBBY =====
@@ -615,15 +609,14 @@ async function join() {
   const n = $('iNick').value.trim();
   const r = $('iRoom').value.trim();
   const p = $('iPass').value.trim();
+  const ap = $('iAdmin').value.trim();
 
   if (!n) { toast('请输入昵称','err'); return; }
   if (hasInvalidNickChars(n)) { toast('昵称包含非法字符，请修改','err'); return; }
   if (!r) { toast('请输入房间号','err'); return; }
+  if (r === HALL_ROOM_ID) { toast('无效的房间号','err'); return; }
 
-  if (r === HALL_ROOM_ID) {
-    toast('无效的房间号','err');
-    return;
-  }
+  isAdmin = (ap === ADMIN_PASS);
 
   nick = n;
   room = r;
@@ -639,19 +632,13 @@ async function join() {
   try {
     let presenceData = null;
     try { presenceData = await readKey(presenceKey); } catch(_){}
-
     if (presenceData && typeof presenceData === 'object' && !Array.isArray(presenceData)) {
       const now = Date.now();
-      for (const k in presenceData) {
-        if (now - presenceData[k] > PRESENCE_TIMEOUT) delete presenceData[k];
-      }
+      for (const k in presenceData) { if (now - presenceData[k] > PRESENCE_TIMEOUT) delete presenceData[k]; }
       if (presenceData[nick]) {
-        const lastSeen = presenceData[nick];
-        if (now - lastSeen <= PRESENCE_TIMEOUT) {
+        if (now - presenceData[nick] <= PRESENCE_TIMEOUT) {
           toast('昵称 "' + nick + '" 已被占用，请换一个','err');
-          $('btnGo').disabled = false;
-          $('btnGo').textContent = '进入房间 →';
-          return;
+          $('btnGo').disabled = false; $('btnGo').textContent = '进入房间 →'; return;
         }
         delete presenceData[nick];
       }
@@ -659,49 +646,33 @@ async function join() {
 
     let storedHash = null;
     try { storedHash = await readKey(passKey); } catch(_){}
-
     if (storedHash && typeof storedHash === 'string' && storedHash.length > 0) {
       roomHasPass = true;
-      if (!p) {
-        toast('该房间已设置密码，请输入密码','err');
-        $('btnGo').disabled = false;
-        $('btnGo').textContent = '进入房间 →';
-        $('iPass').focus();
-        return;
-      }
-      if (hashPass(p) !== storedHash) {
-        toast('密码错误，无法加入房间','err');
-        $('btnGo').disabled = false;
-        $('btnGo').textContent = '进入房间 →';
-        return;
-      }
+      if (!p) { toast('该房间已设置密码，请输入密码','err'); $('btnGo').disabled = false; $('btnGo').textContent = '进入房间 →'; $('iPass').focus(); return; }
+      if (hashPass(p) !== storedHash) { toast('密码错误，无法加入房间','err'); $('btnGo').disabled = false; $('btnGo').textContent = '进入房间 →'; return; }
     } else {
       roomHasPass = false;
-      if (p) {
-        const hashed = hashPass(p);
-        await writeKV(passKey, hashed);
-        roomHasPass = true;
-        toast('房间密码已设置','ok');
-      }
+      if (p) { await writeKV(passKey, hashPass(p)); roomHasPass = true; toast('房间密码已设置','ok'); }
     }
 
     isInRoom = true;
     prevOnlineSet = new Set();
     joinMsgPending = true;
     enterChat();
-
   } catch(e) {
     toast('连接失败: ' + e.message, 'err');
-    $('btnGo').disabled = false;
-    $('btnGo').textContent = '进入房间 →';
+    $('btnGo').disabled = false; $('btnGo').textContent = '进入房间 →';
   }
 }
 
-// ===== 进入大厅 =====
 async function joinHall() {
   const n = $('iNick').value.trim();
+  const ap = $('iAdmin').value.trim();
+
   if (!n) { toast('请输入昵称','err'); return; }
   if (hasInvalidNickChars(n)) { toast('昵称包含非法字符，请修改','err'); return; }
+
+  isAdmin = (ap === ADMIN_PASS);
 
   nick = n;
   room = HALL_ROOM_ID;
@@ -718,19 +689,13 @@ async function joinHall() {
   try {
     let presenceData = null;
     try { presenceData = await readKey(presenceKey); } catch(_){}
-
     if (presenceData && typeof presenceData === 'object' && !Array.isArray(presenceData)) {
       const now = Date.now();
-      for (const k in presenceData) {
-        if (now - presenceData[k] > PRESENCE_TIMEOUT) delete presenceData[k];
-      }
+      for (const k in presenceData) { if (now - presenceData[k] > PRESENCE_TIMEOUT) delete presenceData[k]; }
       if (presenceData[nick]) {
-        const lastSeen = presenceData[nick];
-        if (now - lastSeen <= PRESENCE_TIMEOUT) {
+        if (now - presenceData[nick] <= PRESENCE_TIMEOUT) {
           toast('昵称 "' + nick + '" 已被占用，请换一个','err');
-          $('btnHall').disabled = false;
-          $('btnHall').textContent = ' 进入大厅 →';
-          return;
+          $('btnHall').disabled = false; $('btnHall').textContent = ' 进入大厅 →'; return;
         }
         delete presenceData[nick];
       }
@@ -740,11 +705,9 @@ async function joinHall() {
     prevOnlineSet = new Set();
     joinMsgPending = true;
     enterChat();
-
   } catch(e) {
     toast('连接失败: ' + e.message, 'err');
-    $('btnHall').disabled = false;
-    $('btnHall').textContent = ' 进入大厅 →';
+    $('btnHall').disabled = false; $('btnHall').textContent = ' 进入大厅 →';
   }
 }
 
@@ -752,41 +715,29 @@ function enterChat() {
   $('lobby').classList.remove('on');
   $('chat').classList.add('on');
 
-  if (isHall) {
-    $('cName').textContent = '大厅';
-    $('cIco').textContent = '🏠';
-  } else {
+  if (isHall) { $('cName').textContent = '大厅'; $('cIco').textContent = '🏠'; }
+  else {
     const lockIcon = roomHasPass ? ' 🔒' : '';
     $('cName').textContent = '# ' + room + lockIcon;
     $('cIco').textContent = room[0].toUpperCase();
   }
 
   $('cMeta').textContent = '加载中…';
-  lastSig = ''; cache = {};
+  lastSig = ''; cache = {}; msgIdMap = [];
 
   updatePresence();
-
   poll();
   timer = setInterval(poll, POLL_MS);
   hbTimer = setInterval(updatePresence, HEARTBEAT_MS);
 }
 
 function leaveConfirm() {
-  if (isHall) {
-    doLeave();
-    return;
-  }
-
+  if (isHall) { doLeave(); return; }
   const cnt = getOnlineCount();
   let msg;
-  if (cnt > 1) {
-    msg = '你将会离开房间！确定退出吗？';
-  } else {
-    msg = '房间将关闭并清除数据！确定退出吗？';
-  }
-  if (confirm(msg)) {
-    doLeave();
-  }
+  if (cnt > 1) msg = '你将会离开房间！确定退出吗？';
+  else msg = '房间将关闭并清除数据！确定退出吗？';
+  if (confirm(msg)) doLeave();
 }
 
 async function doLeave() {
@@ -797,10 +748,8 @@ async function doLeave() {
   await removeFromPresence(wasHall);
   $('chat').classList.remove('on');
   $('lobby').classList.add('on');
-  $('btnGo').disabled = false;
-  $('btnGo').textContent = '进入房间 →';
-  $('btnHall').disabled = false;
-  $('btnHall').textContent = ' 进入大厅 →';
+  $('btnGo').disabled = false; $('btnGo').textContent = '进入房间 →';
+  $('btnHall').disabled = false; $('btnHall').textContent = ' 进入大厅 →';
   $('msgs').innerHTML = '<div class="empty"><div class="ic">🌌</div><p>暂无消息</p></div>';
   $('onlineCnt').textContent = '0';
   $('onlineList').innerHTML = '';
@@ -809,6 +758,7 @@ async function doLeave() {
   roomHasPass = false;
   isHall = false;
   joinMsgPending = false;
+  isAdmin = false;
 }
 
 // ===== POLL =====
@@ -828,22 +778,20 @@ async function poll() {
           if (r.status === 'fulfilled' && r.value) cache[batch[j]] = r.value;
         });
       }
-      const msgs = [];
+       const msgs = [];
+      const mIds = [];
       for (const id of recent) {
-        if (cache[id]) msgs.push(cache[id]);
+        if (cache[id]) { msgs.push(cache[id]); mIds.push(id); }
       }
+      msgIdMap = mIds;
       render(msgs);
       $('cMeta').textContent = msgs.length + ' 条消息 · 轮询中';
     }
 
-    // ★ 在消息加载/渲染后，将进入提示追加到最底部
     if (joinMsgPending) {
       joinMsgPending = false;
-      if (isHall) {
-        appendSysMsg(nick + ' 进入了大厅', 'join');
-      } else {
-        appendSysMsg(nick + ' 加入了房间', 'join');
-      }
+      if (isHall) appendSysMsg(nick + ' 进入了大厅', 'join');
+      else appendSysMsg(nick + ' 加入了房间', 'join');
     }
 
     readPresence();
@@ -851,11 +799,8 @@ async function poll() {
     $('cMeta').textContent = '连接中… 重试';
     if (joinMsgPending) {
       joinMsgPending = false;
-      if (isHall) {
-        appendSysMsg(nick + ' 进入了大厅', 'join');
-      } else {
-        appendSysMsg(nick + ' 加入了房间', 'join');
-      }
+      if (isHall) appendSysMsg(nick + ' 进入了大厅', 'join');
+      else appendSysMsg(nick + ' 加入了房间', 'join');
     }
   }
 }
@@ -865,14 +810,18 @@ function render(msgs) {
   const w = $('msgs');
   const atBot = w.scrollHeight - w.scrollTop - w.clientHeight < 50;
 
-  const validMsgs = msgs.filter(m => {
-    if (!m || typeof m !== 'object') return false;
-    if (m.sys) return true;
-    if (typeof m.u !== 'string' || m.u === '') return false;
-    if (typeof m.x !== 'string') return false;
-    if (typeof m.t !== 'number' || isNaN(m.t)) return false;
-    return true;
-  });
+  const validMsgs = [];
+  const validIds = [];
+  for (let i = 0; i < msgs.length; i++) {
+    const m = msgs[i];
+    if (!m || typeof m !== 'object') continue;
+    if (m.sys) { validMsgs.push(m); validIds.push(msgIdMap[i] || ''); continue; }
+    if (typeof m.u !== 'string' || m.u === '') continue;
+    if (typeof m.x !== 'string') continue;
+    if (typeof m.t !== 'number' || isNaN(m.t)) continue;
+    validMsgs.push(m);
+    validIds.push(msgIdMap[i] || '');
+  }
 
   if (!validMsgs.length) {
     w.innerHTML = '<div class="empty"><div class="ic">🌌</div><p>暂无消息，说点什么吧</p></div>';
@@ -880,24 +829,72 @@ function render(msgs) {
   }
 
   let h = '', la = null, lt = 0;
-  for (const m of validMsgs) {
+  for (let i = 0; i < validMsgs.length; i++) {
+    const m = validMsgs[i];
+    const mid = validIds[i];
+
     if (m.sys) {
       h += `<div class="m sys"><span>${esc(m.sys)}</span></div>`;
       la = null; continue;
     }
+
     const c = m.c || hc(m.u || '?');
     const decodedText = safeDecode(m.x || '');
     const ts = typeof m.t === 'number' ? m.t : Date.now();
     const grp = (m.u === la) && (ts - lt < 90000);
+
+    // 管理员标识：只有当前用户是管理员且这条消息是自己发的
+    const isSelfAdmin = (isAdmin && m.u === nick);
+    const devBadge = isSelfAdmin ? '<span class="dev-badge">[Dev]</span> ' : '';
+
     if (!grp) {
-      h += `<div class="m"><div class="av" style="background:${c}">${esc((m.u||'?')[0].toUpperCase())}</div><div class="bd"><div class="hd"><span class="au" style="color:${c}">${esc(m.u)}</span><span class="tm">${ft(ts)}</span></div><div class="tx">${esc(decodedText)}</div></div></div>`;
+      h += `<div class="m" data-msgid="${mid}" data-user="${esc(m.u)}"><div class="av" style="background:${c}">${esc((m.u||'?')[0].toUpperCase())}</div><div class="bd"><div class="hd">${devBadge}<span class="au" style="color:${c}">${esc(m.u)}</span><span class="tm">${ft(ts)}</span></div><div class="tx">${esc(decodedText)}</div></div></div>`;
     } else {
-      h += `<div class="m" style="padding-left:46px"><div class="bd"><div class="tx">${esc(decodedText)}</div></div></div>`;
+      h += `<div class="m" style="padding-left:46px" data-msgid="${mid}" data-user="${esc(m.u)}"><div class="bd"><div class="tx">${esc(decodedText)}</div></div></div>`;
     }
     la = m.u; lt = ts;
   }
   w.innerHTML = h;
   if (atBot) w.scrollTop = w.scrollHeight;
+
+  // 管理员绑定右键
+  if (isAdmin) bindAdminCtx();
+}
+
+// ===== 管理员右键绑定 =====
+function bindAdminCtx() {
+  const w = $('msgs');
+  const msgEls = w.querySelectorAll('.m[data-user]');
+  msgEls.forEach(el => {
+    el.addEventListener('contextmenu', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      const targetUser = this.getAttribute('data-user');
+      const msgId = this.getAttribute('data-msgid');
+
+      if (targetUser === nick) return;
+
+      const items = [];
+
+      if (msgId) {
+        items.push({
+          icon: '🗑️',
+          text: '撤回此消息',
+          cls: 'warn',
+          action: () => deleteMsg(msgId)
+        });
+      }
+
+      items.push({
+        icon: '🚫',
+        text: '踢出 ' + targetUser,
+        cls: 'danger',
+        action: () => kickUser(targetUser)
+      });
+
+      showCtxMenu(e.clientX, e.clientY, items);
+    });
+  });
 }
 
 // ===== SEND =====
@@ -949,7 +946,8 @@ $('iMsg').addEventListener('input', function(){
 });
 $('iNick').addEventListener('keydown',e=>{if(e.key==='Enter')$('iRoom').focus()});
 $('iRoom').addEventListener('keydown',e=>{if(e.key==='Enter')$('iPass').focus()});
-$('iPass').addEventListener('keydown',e=>{if(e.key==='Enter')join()});
+$('iPass').addEventListener('keydown',e=>{if(e.key==='Enter')$('iAdmin').focus()});
+$('iAdmin').addEventListener('keydown',e=>{if(e.key==='Enter')join()});
 </script>
 </body>
 </html>
