@@ -258,11 +258,11 @@ const $=id=>document.getElementById(id);
 function toast(s,t=''){const e=document.createElement('div');e.className='toast '+t;e.textContent=s;$('toasts').appendChild(e);setTimeout(()=>{e.style.opacity='0';e.style.transition='opacity .3s'},2600);setTimeout(()=>e.remove(),3000)}
 function rnd(n=24){const c='0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';const a=new Uint8Array(n);crypto.getRandomValues(a);let s='';for(let i=0;i<n;i++)s+=c[a[i]%c.length];return s}
 function hc(s){let h=0;for(let i=0;i<s.length;i++)h=s.charCodeAt(i)+((h<<5)-h);const C=['#6c5ce7','#00cec9','#fd79a8','#fdcb6e','#e17055','#0984e3','#00b894','#e84393','#a29bfe','#55efc4','#fab1a0','#74b9ff','#ff7675'];return C[Math.abs(h)%C.length]}
-function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+function esc(s){const d=document.createElement('div');d.textContent=String(s);return d.innerHTML}
 function ft(ts){const d=new Date(ts);return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')}
 
-// 安全解码：兼容旧消息（未编码的）
 function safeDecode(str) {
+  if (typeof str !== 'string') return String(str || '');
   try { return decodeURIComponent(str); } catch { return str; }
 }
 
@@ -289,6 +289,28 @@ function writeKV(key, value) {
     img.src = url;
     setTimeout(fin, 4000);
   });
+}
+
+// 【修复1】使用 sendBeacon 进行页面关闭时的可靠写入
+function writeKVBeacon(key, value) {
+  const url = BASE + '/update/?key=' + encodeURIComponent(key) + '&value=' + encodeURIComponent(value);
+  try {
+    if (navigator.sendBeacon) {
+      navigator.sendBeacon(url);
+      return true;
+    }
+  } catch(_){}
+  // fallback: 同步 XHR（部分浏览器在 pagehide 中仍可用）
+  try {
+    const xhr = new XMLHttpRequest();
+    xhr.open('GET', url, false); // 同步
+    xhr.send();
+    return true;
+  } catch(_){}
+  // 最后 fallback: Image
+  const img = new Image();
+  img.src = url;
+  return true;
 }
 
 const PROXIES = [
@@ -439,6 +461,62 @@ async function removeFromPresence(wasHall) {
   } catch(_){}
 }
 
+// 【修复1核心】页面关闭时同步移除在线状态
+function removeFromPresenceSync(wasHall) {
+  try {
+    let data = {};
+    // 同步读取 presence
+    try {
+      const target = BASE + '/' + encodeURIComponent(presenceKey);
+      const xhr = new XMLHttpRequest();
+      xhr.open('GET', target, false);
+      xhr.timeout = 3000;
+      xhr.send();
+      if (xhr.status === 200) {
+        const parsed = parseVal(xhr.responseText);
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) data = parsed;
+      }
+    } catch(_){}
+
+    delete data[nick];
+
+    const now = Date.now();
+    for (const k in data) {
+      if (now - data[k] > PRESENCE_TIMEOUT) delete data[k];
+    }
+
+    // 用 sendBeacon 写入（页面关闭时最可靠）
+    const val = JSON.stringify(data);
+    const url = BASE + '/update/?key=' + encodeURIComponent(presenceKey) + '&value=' + encodeURIComponent(val);
+
+    if (navigator.sendBeacon) {
+      navigator.sendBeacon(url);
+    } else {
+      try {
+        const xhr2 = new XMLHttpRequest();
+        xhr2.open('GET', url, false);
+        xhr2.timeout = 3000;
+        xhr2.send();
+      } catch(_){}
+    }
+
+    // 如果是普通房间且没人了，清空索引
+    if (!wasHall && Object.keys(data).length === 0) {
+      const clearUrl = BASE + '/update/?key=' + encodeURIComponent(idxKey) + '&value=' + encodeURIComponent(JSON.stringify([]));
+      if (navigator.sendBeacon) {
+        navigator.sendBeacon(clearUrl);
+      } else {
+        try {
+          const xhr3 = new XMLHttpRequest();
+          xhr3.open('GET', clearUrl, false);
+          xhr3.timeout = 3000;
+          xhr3.send();
+        } catch(_){}
+      }
+    }
+  } catch(_){}
+}
+
 function getOnlineCount() {
   return Object.keys(onlineUsers).length;
 }
@@ -460,9 +538,11 @@ window.addEventListener('beforeunload', function(e) {
   }
 });
 
+// 【修复1】使用 pagehide 同步移除
 window.addEventListener('pagehide', () => {
   if (isInRoom) {
-    removeFromPresence(isHall);
+    removeFromPresenceSync(isHall);
+    isInRoom = false;
   }
 });
 
@@ -500,11 +580,16 @@ async function join() {
       for (const k in presenceData) {
         if (now - presenceData[k] > PRESENCE_TIMEOUT) delete presenceData[k];
       }
+      // 【修复1】超时则允许覆盖进入
       if (presenceData[nick]) {
-        toast('昵称 "' + nick + '" 已被占用，请换一个','err');
-        $('btnGo').disabled = false;
-        $('btnGo').textContent = '进入房间 →';
-        return;
+        const lastSeen = presenceData[nick];
+        if (now - lastSeen <= PRESENCE_TIMEOUT) {
+          toast('昵称 "' + nick + '" 已被占用，请换一个','err');
+          $('btnGo').disabled = false;
+          $('btnGo').textContent = '进入房间 →';
+          return;
+        }
+        delete presenceData[nick];
       }
     }
 
@@ -573,11 +658,16 @@ async function joinHall() {
       for (const k in presenceData) {
         if (now - presenceData[k] > PRESENCE_TIMEOUT) delete presenceData[k];
       }
+      // 【修复1】大厅同样允许超时后重新进入
       if (presenceData[nick]) {
-        toast('昵称 "' + nick + '" 已被占用，请换一个','err');
-        $('btnHall').disabled = false;
-        $('btnHall').textContent = ' 进入大厅 →';
-        return;
+        const lastSeen = presenceData[nick];
+        if (now - lastSeen <= PRESENCE_TIMEOUT) {
+          toast('昵称 "' + nick + '" 已被占用，请换一个','err');
+          $('btnHall').disabled = false;
+          $('btnHall').textContent = ' 进入大厅 →';
+          return;
+        }
+        delete presenceData[nick];
       }
     }
 
@@ -689,30 +779,42 @@ async function poll() {
 }
 
 // ===== RENDER =====
+// 【修复2】增加防御性校验，确保消息数据有效
 function render(msgs) {
   const w = $('msgs');
   const atBot = w.scrollHeight - w.scrollTop - w.clientHeight < 50;
 
-  if (!msgs.length) {
+  // 过滤无效消息
+  const validMsgs = msgs.filter(m => {
+    if (!m || typeof m !== 'object') return false;
+    if (m.sys) return true;
+    if (typeof m.u !== 'string' || m.u === '') return false;
+    if (typeof m.x !== 'string') return false;
+    if (typeof m.t !== 'number' || isNaN(m.t)) return false;
+    return true;
+  });
+
+  if (!validMsgs.length) {
     w.innerHTML = '<div class="empty"><div class="ic">🌌</div><p>暂无消息，说点什么吧</p></div>';
     return;
   }
 
   let h = '', la = null, lt = 0;
-  for (const m of msgs) {
+  for (const m of validMsgs) {
     if (m.sys) {
       h += `<div class="m sys"><span>${esc(m.sys)}</span></div>`;
       la = null; continue;
     }
-    const c = m.c || hc(m.u||'?');
-    const decodedText = safeDecode(m.x||'');
-    const grp = (m.u === la) && (m.t - lt < 90000);
+    const c = m.c || hc(m.u || '?');
+    const decodedText = safeDecode(m.x || '');
+    const ts = typeof m.t === 'number' ? m.t : Date.now();
+    const grp = (m.u === la) && (ts - lt < 90000);
     if (!grp) {
-      h += `<div class="m"><div class="av" style="background:${c}">${esc((m.u||'?')[0].toUpperCase())}</div><div class="bd"><div class="hd"><span class="au" style="color:${c}">${esc(m.u||'')}</span><span class="tm">${ft(m.t||0)}</span></div><div class="tx">${esc(decodedText)}</div></div></div>`;
+      h += `<div class="m"><div class="av" style="background:${c}">${esc((m.u||'?')[0].toUpperCase())}</div><div class="bd"><div class="hd"><span class="au" style="color:${c}">${esc(m.u)}</span><span class="tm">${ft(ts)}</span></div><div class="tx">${esc(decodedText)}</div></div></div>`;
     } else {
       h += `<div class="m" style="padding-left:46px"><div class="bd"><div class="tx">${esc(decodedText)}</div></div></div>`;
     }
-    la = m.u; lt = m.t;
+    la = m.u; lt = ts;
   }
   w.innerHTML = h;
   if (atBot) w.scrollTop = w.scrollHeight;
