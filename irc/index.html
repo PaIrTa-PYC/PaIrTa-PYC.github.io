@@ -59,9 +59,18 @@ body{
 }
 .btn-go:hover{transform:translateY(-2px);box-shadow:0 6px 22px var(--glow)}
 .btn-go:disabled{opacity:.5;cursor:not-allowed;transform:none}
+
+.btn-hall{
+  width:100%;padding:13px;border:none;border-radius:10px;margin-top:10px;
+  background:linear-gradient(135deg,var(--green),#00b894);
+  color:#fff;font-size:15px;font-weight:700;cursor:pointer;
+  box-shadow:0 4px 14px rgba(0,206,201,.3);transition:transform .15s,box-shadow .15s;
+}
+.btn-hall:hover{transform:translateY(-2px);box-shadow:0 6px 22px rgba(0,206,201,.3)}
+.btn-hall:disabled{opacity:.5;cursor:not-allowed;transform:none}
+
 .card .note{margin-top:20px;font-size:11px;color:var(--t3);line-height:1.7}
 
-/* 密码锁图标 */
 .fg .pass-wrap{position:relative}
 .fg .pass-wrap input{padding-right:40px}
 .fg .pass-wrap .lock-ico{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:14px;opacity:.4}
@@ -85,10 +94,8 @@ body{
 }
 .btn-out:hover{background:rgba(255,118,117,.18)}
 
-/* 房间锁标识 */
 .room-lock{font-size:12px;opacity:.5;margin-left:4px}
 
-/* 在线人数 */
 .online-badge{
   display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:8px;
   background:rgba(0,206,201,.08);border:1px solid rgba(0,206,201,.2);
@@ -173,7 +180,7 @@ body{
 <div class="card">
   <div class="logo">💬</div>
   <h1>NexusChat</h1>
-  <p class="sub">轻量 IRC 聊天</p>
+  <p class="sub">轻量 IRC 聊天 · 基于 TextDB 去中心化存储</p>
   <div class="fg"><label>昵称</label><input id="iNick" maxlength="16" placeholder="你的昵称" autocomplete="off"></div>
   <div class="fg"><label>房间号</label><input id="iRoom" maxlength="28" placeholder="输入房间号（新号即创建）" autocomplete="off"></div>
   <div class="fg">
@@ -185,6 +192,7 @@ body{
     <div class="hint-small">创建新房间时填写则设置密码；加入已有密码房间时需填写正确密码</div>
   </div>
   <button class="btn-go" id="btnGo" onclick="join()">进入房间 →</button>
+  <button class="btn-hall" id="btnHall" onclick="joinHall()"> 进入大厅 →</button>
   <div class="note">消息存储在 TextDB 公开服务，请勿发送敏感内容<br>每 IP 每日限 500 次写入</div>
 </div>
 </div>
@@ -197,7 +205,6 @@ body{
       <div class="name" id="cName">#</div>
       <div class="meta" id="cMeta">连接中…</div>
     </div>
-    <!-- 在线人数 -->
     <div class="online-badge" id="onlineBadge" onclick="toggleOnlineList()">
       <span class="cnt" id="onlineCnt">0</span>
       <span class="arrow" id="onlineArrow">▼</span>
@@ -235,6 +242,7 @@ const MAX_MSG = 50;
 const POLL_MS = 3000;
 const HEARTBEAT_MS = 5000;
 const PRESENCE_TIMEOUT = 15000;
+const HALL_ROOM_ID = '123';
 
 // ===== STATE =====
 let nick='', room='', idxKey='', presenceKey='', passKey='', color='', timer=null, hbTimer=null, lastSig='', busy=false;
@@ -243,6 +251,7 @@ let onlineUsers = {};
 let prevOnlineSet = new Set();
 let isInRoom = false;
 let roomHasPass = false;
+let isHall = false;
 
 // ===== UTILS =====
 const $=id=>document.getElementById(id);
@@ -252,7 +261,11 @@ function hc(s){let h=0;for(let i=0;i<s.length;i++)h=s.charCodeAt(i)+((h<<5)-h);c
 function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
 function ft(ts){const d=new Date(ts);return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')}
 
-// 简单密码哈希（非安全级别，仅防止明文暴露）
+// 安全解码：兼容旧消息（未编码的）
+function safeDecode(str) {
+  try { return decodeURIComponent(str); } catch { return str; }
+}
+
 function hashPass(str) {
   let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
   for (let i = 0; i < str.length; i++) {
@@ -265,7 +278,6 @@ function hashPass(str) {
   return (h2 >>> 0).toString(36) + (h1 >>> 0).toString(36);
 }
 
-// ===== 写入：Image GET =====
 function writeKV(key, value) {
   return new Promise(resolve => {
     const url = BASE + '/update/?key=' + encodeURIComponent(key) + '&value=' + encodeURIComponent(value);
@@ -279,7 +291,6 @@ function writeKV(key, value) {
   });
 }
 
-// ===== 读取：多代理轮换 =====
 const PROXIES = [
   u => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(u),
   u => 'https://corsproxy.io/?url=' + encodeURIComponent(u),
@@ -323,14 +334,11 @@ async function updatePresence() {
       const cur = await readKey(presenceKey);
       if (cur && typeof cur === 'object' && !Array.isArray(cur)) data = cur;
     } catch(_){}
-
     data[nick] = Date.now();
-
     const now = Date.now();
     for (const k in data) {
       if (now - data[k] > PRESENCE_TIMEOUT) delete data[k];
     }
-
     await writeKV(presenceKey, JSON.stringify(data));
     processPresence(data);
   } catch(_){}
@@ -352,19 +360,18 @@ async function readPresence() {
 
 function processPresence(data) {
   const newSet = new Set(Object.keys(data));
-
-  for (const name of newSet) {
-    if (!prevOnlineSet.has(name) && name !== nick) {
-      appendSysMsg(name + ' 加入了房间', 'join');
+  if (!isHall) {
+    for (const name of newSet) {
+      if (!prevOnlineSet.has(name) && name !== nick) {
+        appendSysMsg(name + ' 加入了房间', 'join');
+      }
+    }
+    for (const name of prevOnlineSet) {
+      if (!newSet.has(name) && name !== nick) {
+        appendSysMsg(name + ' 离开了房间', 'leave');
+      }
     }
   }
-
-  for (const name of prevOnlineSet) {
-    if (!newSet.has(name) && name !== nick) {
-      appendSysMsg(name + ' 离开了房间', 'leave');
-    }
-  }
-
   prevOnlineSet = newSet;
   onlineUsers = data;
   updateOnlineUI();
@@ -373,7 +380,6 @@ function processPresence(data) {
 function updateOnlineUI() {
   const cnt = Object.keys(onlineUsers).length;
   $('onlineCnt').textContent = cnt;
-
   let html = '';
   const names = Object.keys(onlineUsers).sort();
   for (const name of names) {
@@ -401,7 +407,6 @@ function appendSysMsg(text, type) {
   const w = $('msgs');
   const empty = w.querySelector('.empty');
   if (empty) empty.remove();
-
   const div = document.createElement('div');
   div.className = 'm sys ' + type;
   div.innerHTML = `<span>${esc(text)}</span>`;
@@ -410,7 +415,7 @@ function appendSysMsg(text, type) {
 }
 
 // ===== 离开房间处理 =====
-async function removeFromPresence() {
+async function removeFromPresence(wasHall) {
   try {
     let data = {};
     try {
@@ -425,7 +430,7 @@ async function removeFromPresence() {
       if (now - data[k] > PRESENCE_TIMEOUT) delete data[k];
     }
 
-    if (Object.keys(data).length === 0) {
+    if (!wasHall && Object.keys(data).length === 0) {
       await writeKV(idxKey, JSON.stringify([]));
       await writeKV(presenceKey, JSON.stringify({}));
     } else {
@@ -441,6 +446,8 @@ function getOnlineCount() {
 // ===== beforeunload =====
 window.addEventListener('beforeunload', function(e) {
   if (!isInRoom) return;
+  if (isHall) return;
+
   const cnt = getOnlineCount();
   if (cnt > 1) {
     e.preventDefault();
@@ -455,7 +462,7 @@ window.addEventListener('beforeunload', function(e) {
 
 window.addEventListener('pagehide', () => {
   if (isInRoom) {
-    removeFromPresence();
+    removeFromPresence(isHall);
   }
 });
 
@@ -468,26 +475,28 @@ async function join() {
   if (!n) { toast('请输入昵称','err'); return; }
   if (!r) { toast('请输入房间号','err'); return; }
 
+  if (r === HALL_ROOM_ID) {
+    toast('无效的房间号','err');
+    return;
+  }
+
   nick = n;
   room = r;
+  isHall = false;
   idxKey = PREFIX + r.replace(/[^0-9a-zA-Z\-_]/g,'x').slice(0,30);
   presenceKey = idxKey + '_presence';
   passKey = idxKey + '_pass';
   color = hc(nick);
 
   $('btnGo').disabled = true;
-  $('btnGo').textContent = '验证中…';
+  $('btnGo').textContent = '进入中…';
 
   try {
-    // === 1. 检查用户名是否重复 ===
     let presenceData = null;
-    try {
-      presenceData = await readKey(presenceKey);
-    } catch(_){}
+    try { presenceData = await readKey(presenceKey); } catch(_){}
 
     if (presenceData && typeof presenceData === 'object' && !Array.isArray(presenceData)) {
       const now = Date.now();
-      // 清理过期用户后检查
       for (const k in presenceData) {
         if (now - presenceData[k] > PRESENCE_TIMEOUT) delete presenceData[k];
       }
@@ -499,14 +508,10 @@ async function join() {
       }
     }
 
-    // === 2. 检查房间密码 ===
     let storedHash = null;
-    try {
-      storedHash = await readKey(passKey);
-    } catch(_){}
+    try { storedHash = await readKey(passKey); } catch(_){}
 
     if (storedHash && typeof storedHash === 'string' && storedHash.length > 0) {
-      // 房间已有密码
       roomHasPass = true;
       if (!p) {
         toast('该房间已设置密码，请输入密码','err');
@@ -522,10 +527,8 @@ async function join() {
         return;
       }
     } else {
-      // 房间无密码
       roomHasPass = false;
       if (p) {
-        // 用户想为新房间设置密码
         const hashed = hashPass(p);
         await writeKV(passKey, hashed);
         roomHasPass = true;
@@ -533,7 +536,6 @@ async function join() {
       }
     }
 
-    // === 3. 一切通过，进入房间 ===
     isInRoom = true;
     prevOnlineSet = new Set();
     enterChat();
@@ -545,18 +547,72 @@ async function join() {
   }
 }
 
+// ===== 进入大厅 =====
+async function joinHall() {
+  const n = $('iNick').value.trim();
+  if (!n) { toast('请输入昵称','err'); return; }
+
+  nick = n;
+  room = HALL_ROOM_ID;
+  isHall = true;
+  roomHasPass = false;
+  idxKey = PREFIX + HALL_ROOM_ID;
+  presenceKey = idxKey + '_presence';
+  passKey = idxKey + '_pass';
+  color = hc(nick);
+
+  $('btnHall').disabled = true;
+  $('btnHall').textContent = '进入中…';
+
+  try {
+    let presenceData = null;
+    try { presenceData = await readKey(presenceKey); } catch(_){}
+
+    if (presenceData && typeof presenceData === 'object' && !Array.isArray(presenceData)) {
+      const now = Date.now();
+      for (const k in presenceData) {
+        if (now - presenceData[k] > PRESENCE_TIMEOUT) delete presenceData[k];
+      }
+      if (presenceData[nick]) {
+        toast('昵称 "' + nick + '" 已被占用，请换一个','err');
+        $('btnHall').disabled = false;
+        $('btnHall').textContent = ' 进入大厅 →';
+        return;
+      }
+    }
+
+    isInRoom = true;
+    prevOnlineSet = new Set();
+    enterChat();
+
+  } catch(e) {
+    toast('连接失败: ' + e.message, 'err');
+    $('btnHall').disabled = false;
+    $('btnHall').textContent = ' 进入大厅 →';
+  }
+}
+
 function enterChat() {
   $('lobby').classList.remove('on');
   $('chat').classList.add('on');
 
-  const lockIcon = roomHasPass ? ' 🔒' : '';
-  $('cName').textContent = '# ' + room + lockIcon;
-  $('cIco').textContent = room[0].toUpperCase();
+  if (isHall) {
+    $('cName').textContent = '大厅';
+    $('cIco').textContent = '🏠';
+  } else {
+    const lockIcon = roomHasPass ? ' 🔒' : '';
+    $('cName').textContent = '# ' + room + lockIcon;
+    $('cIco').textContent = room[0].toUpperCase();
+  }
+
   $('cMeta').textContent = '加载中…';
   lastSig = ''; cache = {};
 
   updatePresence();
-  appendSysMsg(nick + ' 加入了房间', 'join');
+
+  if (!isHall) {
+    appendSysMsg(nick + ' 加入了房间', 'join');
+  }
 
   poll();
   timer = setInterval(poll, POLL_MS);
@@ -564,6 +620,11 @@ function enterChat() {
 }
 
 function leaveConfirm() {
+  if (isHall) {
+    doLeave();
+    return;
+  }
+
   const cnt = getOnlineCount();
   let msg;
   if (cnt > 1) {
@@ -576,21 +637,25 @@ function leaveConfirm() {
   }
 }
 
-function doLeave() {
+async function doLeave() {
+  const wasHall = isHall;
   isInRoom = false;
   clearInterval(timer); timer = null;
   clearInterval(hbTimer); hbTimer = null;
-  removeFromPresence();
+  await removeFromPresence(wasHall);
   $('chat').classList.remove('on');
   $('lobby').classList.add('on');
   $('btnGo').disabled = false;
   $('btnGo').textContent = '进入房间 →';
+  $('btnHall').disabled = false;
+  $('btnHall').textContent = ' 进入大厅 →';
   $('msgs').innerHTML = '<div class="empty"><div class="ic">🌌</div><p>暂无消息</p></div>';
   $('onlineCnt').textContent = '0';
   $('onlineList').innerHTML = '';
   onlineUsers = {};
   prevOnlineSet = new Set();
   roomHasPass = false;
+  isHall = false;
 }
 
 // ===== POLL =====
@@ -640,11 +705,12 @@ function render(msgs) {
       la = null; continue;
     }
     const c = m.c || hc(m.u||'?');
+    const decodedText = safeDecode(m.x||'');
     const grp = (m.u === la) && (m.t - lt < 90000);
     if (!grp) {
-      h += `<div class="m"><div class="av" style="background:${c}">${esc((m.u||'?')[0].toUpperCase())}</div><div class="bd"><div class="hd"><span class="au" style="color:${c}">${esc(m.u||'')}</span><span class="tm">${ft(m.t||0)}</span></div><div class="tx">${esc(m.x||'')}</div></div></div>`;
+      h += `<div class="m"><div class="av" style="background:${c}">${esc((m.u||'?')[0].toUpperCase())}</div><div class="bd"><div class="hd"><span class="au" style="color:${c}">${esc(m.u||'')}</span><span class="tm">${ft(m.t||0)}</span></div><div class="tx">${esc(decodedText)}</div></div></div>`;
     } else {
-      h += `<div class="m" style="padding-left:46px"><div class="bd"><div class="tx">${esc(m.x||'')}</div></div></div>`;
+      h += `<div class="m" style="padding-left:46px"><div class="bd"><div class="tx">${esc(decodedText)}</div></div></div>`;
     }
     la = m.u; lt = m.t;
   }
@@ -665,7 +731,8 @@ async function send() {
 
   try {
     const msgId = rnd(24);
-    const body = JSON.stringify({ u:nick, x:txt, t:Date.now(), c:color });
+    const encodedTxt = encodeURIComponent(txt);
+    const body = JSON.stringify({ u:nick, x:encodedTxt, t:Date.now(), c:color });
     await writeKV(msgId, body);
 
     let ids = [];
@@ -678,7 +745,7 @@ async function send() {
     if (ids.length > MAX_MSG) ids = ids.slice(ids.length - MAX_MSG);
     await writeKV(idxKey, JSON.stringify(ids));
 
-    cache[msgId] = { u:nick, x:txt, t:Date.now(), c:color };
+    cache[msgId] = { u:nick, x:encodedTxt, t:Date.now(), c:color };
     $('iMsg').value = '';
     $('iMsg').style.height = 'auto';
     lastSig = '';
