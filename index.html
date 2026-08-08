@@ -279,68 +279,6 @@
             to { transform: rotate(360deg); }
         }
 
-        /* 技能 - 单卡片居中 */
-        .skills-single {
-            display: flex;
-            justify-content: center;
-        }
-
-        .skill-card {
-            padding: 2.5rem 3rem;
-            background: var(--bg-card);
-            border-radius: 20px;
-            border: 1px solid var(--border);
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-            text-align: center;
-            min-width: 280px;
-        }
-
-        .skill-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: var(--gradient-1);
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .skill-card:hover {
-            transform: translateY(-5px);
-            border-color: var(--accent);
-            box-shadow: 0 10px 40px rgba(108, 99, 255, 0.1);
-        }
-
-        .skill-card:hover::before {
-            opacity: 1;
-        }
-
-        .skill-icon {
-            width: 60px;
-            height: 60px;
-            border-radius: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.8rem;
-            margin: 0 auto 1.2rem;
-            background: rgba(108, 99, 255, 0.15);
-        }
-
-        .skill-card h3 {
-            font-size: 1.3rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .skill-card p {
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-        }
-
         /* 个人项目 */
         .projects-grid {
             display: grid;
@@ -525,7 +463,7 @@
         <div class="nav-container">
             <div class="logo">PaIrTa_PYC的小站</div>
             <ul class="nav-links">
-                <li><a href="#skills">我会干啥</a></li>
+                <li><a href="#home">主页</a></li>
                 <li><a href="#projects">个人项目</a></li>
                 <li><a href="#announcement">公告</a></li>
                 <li><a href="#contact">联系我</a></li>
@@ -542,22 +480,6 @@
             <p>我用最简单最直白的话告诉你，你好</p>
         </div>
     </div>
-
-    <!-- 技能 -->
-    <section id="skills">
-        <div class="section-header fade-in">
-            <span class="section-tag">Skills</span>
-            <h2>技术栈</h2>
-            <p></p>
-        </div>
-        <div class="skills-single fade-in">
-            <div class="skill-card">
-                <div class="skill-icon">C</div>
-                <h3>C++</h3>
-                <p>简单的Windows桌面应用开发</p>
-            </div>
-        </div>
-    </section>
 
     <!-- 个人项目 -->
     <section id="projects">
@@ -579,14 +501,14 @@
                 <div class="project-image">💬</div>
                 <div class="project-info">
                     <h3>NexusChat 聊天室</h3>
-                    <p>一个实时在线聊天室，支持多人同时在线交流</p>
+                    <p>一个实时在线聊天室，支持多人同时在线交流，简洁轻量的聊天体验</p>
                     <a href="./irc/index.html" class="project-btn">访问网站</a>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- 公告（倒数第二，在联系上面） -->
+    <!-- 公告 -->
     <section id="announcement">
         <div class="section-header fade-in">
             <span class="section-tag">Announcement</span>
@@ -611,6 +533,7 @@
         <div class="contact-cards fade-in">
             <a href="https://github.com/PaIrTa-PYC" class="contact-card">
                 <span>GitHub</span>
+            </a>
             <a href="https://space.bilibili.com/652131791" class="contact-card">
                 <span>Bilibili</span>
             </a>
@@ -623,9 +546,9 @@
     </footer>
 
     <script>
-          document.addEventListener('contextmenu',
+        document.addEventListener('contextmenu',
         event => event.preventDefault()
-        );
+);
         // 刷新后始终回到顶部
         window.addEventListener('DOMContentLoaded', () => {
             window.scrollTo(0, 0);
