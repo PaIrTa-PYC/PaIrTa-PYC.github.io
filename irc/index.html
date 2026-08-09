@@ -338,12 +338,21 @@ const POLL_MS = 3000;
 const HEARTBEAT_MS = 5000;
 const PRESENCE_TIMEOUT = 15000;
 const HALL_ROOM_ID = '123';
-const ADMIN_PASS = '141220177';
+const ADMIN_STORE_KEY = 'KanDeShiGAY';
 const RECALL_LIMIT = 60000; // 1分钟撤回
 const KICK_DURATION = 60000; // 踢出1分钟
 const REFRESH_INTERVAL = 300000; // 5分钟刷新防TTL
 
 // ===== STATE =====
+async function verifyAdmin(inputPass) {
+  if (!inputPass) return false;
+  try {
+    const stored = await readKey(ADMIN_STORE_KEY);
+    if (!stored || typeof stored !== 'string') return false;
+    return hashPass(inputPass) === stored;
+  } catch(_) { return false; }
+}
+
 let nick='', room='', idxKey='', presenceKey='', passKey='', color='', timer=null, hbTimer=null, lastSig='', busy=false;
 let cache = {};
 let msgIdMap = [];
@@ -1019,7 +1028,7 @@ async function join() {
   if (!r) { toast('请输入房间号','err'); return; }
   if (r === HALL_ROOM_ID) { toast('无效的房间号','err'); return; }
 
-  isAdmin = (ap === ADMIN_PASS);
+  isAdmin = ap ? await verifyAdmin(ap) : false;
   nick = n;
   room = r;
   isHall = false;
@@ -1085,7 +1094,7 @@ async function joinHall() {
   if (!n) { toast('请输入昵称','err'); return; }
   if (hasInvalidNickChars(n)) { toast('昵称包含非法字符，请修改','err'); return; }
 
-  isAdmin = (ap === ADMIN_PASS);
+  isAdmin = ap ? await verifyAdmin(ap) : false;
   nick = n;
   room = HALL_ROOM_ID;
   isHall = true;
