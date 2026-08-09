@@ -47,15 +47,7 @@ body{
   background:var(--bg3);color:var(--t1);font-size:14px;outline:none;
   transition:border .2s,box-shadow .2s;
 }
-.fg input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--glow)}
-.fg input:-webkit-autofill,
-.fg input:-webkit-autofill:hover,
-.fg input:-webkit-autofill:focus{
-  -webkit-box-shadow:0 0 0 1000px var(--bg3) inset;
-  -webkit-text-fill-color:var(--t1);
-  box-shadow:none;
-  border-color:var(--border);
-}
+.fg input:focus{outline:none}
 .fg input::placeholder{color:var(--t3)}
 .fg .hint-small{font-size:10px;color:var(--t3);margin-top:5px}
 .btn-go{
@@ -222,7 +214,7 @@ body{
   resize:none;outline:none;max-height:110px;min-height:42px;line-height:1.5;
   transition:border .2s,box-shadow .2s;
 }
-.inp textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--glow)}
+.inp textarea:focus{outline:none}
 .inp textarea::placeholder{color:var(--t3)}
 .inp textarea.muted{opacity:.5;cursor:not-allowed;background:rgba(255,118,117,.05);border-color:rgba(255,118,117,.3)}
 .btn-s{
@@ -481,27 +473,6 @@ function parseVal(text) {
   if (!text || text === 'Not Found' || text === 'null') return null;
   try { return JSON.parse(text); } catch { return text; }
 }
-
-// ===== [7] Cookie 记录用户名 =====
-function setCookie(name, val, days) {
-  const d = new Date();
-  d.setTime(d.getTime() + days * 86400000);
-  document.cookie = name + '=' + encodeURIComponent(val) + ';expires=' + d.toUTCString() + ';path=/';
-}
-function getCookie(name) {
-  const m = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
-  return m ? decodeURIComponent(m[2]) : '';
-}
-// 页面加载时自动填充
-(function(){
-  const saved = getCookie('nxc_nick');
-  if (saved) {
-    const el = $('iNick');
-    el.value = saved;
-    el.blur();
-  }
-})();
-
 
 // ===== [5] 弹窗工具 =====
 function showModal(title, fields, onConfirm, confirmText, confirmCls) {
@@ -1124,7 +1095,6 @@ async function joinHall() {
   passKey = idxKey + '_pass';
   color = hc(nick);
 
-  setCookie('nxc_nick', nick, 365);
 
   $('btnHall').disabled = true;
   $('btnHall').textContent = '进入中…';
