@@ -48,6 +48,14 @@ body{
   transition:border .2s,box-shadow .2s;
 }
 .fg input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--glow)}
+.fg input:-webkit-autofill,
+.fg input:-webkit-autofill:hover,
+.fg input:-webkit-autofill:focus{
+  -webkit-box-shadow:0 0 0 1000px var(--bg3) inset;
+  -webkit-text-fill-color:var(--t1);
+  box-shadow:none;
+  border-color:var(--border);
+}
 .fg input::placeholder{color:var(--t3)}
 .fg .hint-small{font-size:10px;color:var(--t3);margin-top:5px}
 .btn-go{
@@ -487,8 +495,13 @@ function getCookie(name) {
 // 页面加载时自动填充
 (function(){
   const saved = getCookie('nxc_nick');
-  if (saved) $('iNick').value = saved;
+  if (saved) {
+    const el = $('iNick');
+    el.value = saved;
+    el.blur();
+  }
 })();
+
 
 // ===== [5] 弹窗工具 =====
 function showModal(title, fields, onConfirm, confirmText, confirmCls) {
@@ -1044,7 +1057,7 @@ async function join() {
   passKey = idxKey + '_pass';
   color = hc(nick);
 
-  setCookie('nxc_nick', nick, 365);
+ 
 
   $('btnGo').disabled = true;
   $('btnGo').textContent = '进入中…';
