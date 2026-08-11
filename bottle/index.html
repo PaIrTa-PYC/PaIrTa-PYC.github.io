@@ -22,63 +22,260 @@
             }
         }
     </script>
-    <style type="text/tailwindcss">
-        @layer utilities {
-            .ocean-bg { background: linear-gradient(180deg, #0c4a6e 0%, #0284c7 50%, #38bdf8 100%);} 
-            .wave-animation { animation: wave 3s ease-in-out infinite; }
-            @keyframes wave { 0%,100%{transform:translateY(0);}50%{transform:translateY(-10px);} }
-            .float-animation { animation: float 4s ease-in-out infinite; }
-            @keyframes float {0%,100%{transform:translateY(0) rotate(-2deg);}50%{transform:translateY(-15px) rotate(2deg);} }
-            .bottle-glass { background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); border:1px solid rgba(255,255,255,0.3);} 
-            .input-focus { @apply focus:ring-2 focus:ring-primary/50 focus:border-primary focus:outline-none; }
-            .btn-primary { @apply bg-gradient-to-r from-primary to-secondary text-white px-6 py-3 rounded-xl font-medium shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transform hover:-translate-y-0.5 transition-all duration-200; }
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+
+        .ocean-bg {
+            background: linear-gradient(160deg, #0c1445 0%, #0c4a6e 30%, #0369a1 60%, #0ea5e9 100%);
+        }
+
+        .wave-animation { animation: wave 3s ease-in-out infinite; }
+        @keyframes wave { 0%,100%{transform:translateY(0);}50%{transform:translateY(-10px);} }
+
+        .float-animation { animation: float 4s ease-in-out infinite; }
+        @keyframes float {0%,100%{transform:translateY(0) rotate(-2deg);}50%{transform:translateY(-15px) rotate(2deg);} }
+
+        /* 主毛玻璃卡片 */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            box-shadow:
+                0 8px 32px rgba(0, 0, 0, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        /* 内部面板毛玻璃 */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
+        /* 输入框毛玻璃 */
+        .glass-input {
+            background: rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            transition: all 0.3s ease;
+        }
+        .glass-input:focus {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(56, 189, 248, 0.5);
+            box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15), 0 0 20px rgba(56, 189, 248, 0.1);
+            outline: none;
+        }
+        .glass-input::placeholder {
+            color: rgba(255, 255, 255, 0.35);
+        }
+
+        /* 按钮 */
+        .btn-glass {
+            background: linear-gradient(135deg, rgba(14, 165, 233, 0.8), rgba(6, 182, 212, 0.8));
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 20px rgba(14, 165, 233, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+            transition: all 0.3s ease;
+        }
+        .btn-glass:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(14, 165, 233, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+        .btn-glass:active {
+            transform: translateY(0);
+        }
+
+        /* Tab 按钮 */
+        .tab-active {
+            background: rgba(14, 165, 233, 0.7);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 15px rgba(14, 165, 233, 0.3);
+        }
+        .tab-inactive {
+            background: rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .tab-inactive:hover {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        /* 捡到瓶子的卡片 */
+        .glass-amber {
+            background: rgba(245, 158, 11, 0.12);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(245, 158, 11, 0.25);
+        }
+
+        /* 历史记录卡片 */
+        .glass-history-item {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: all 0.2s ease;
+        }
+        .glass-history-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        /* 状态消息 */
+        .glass-status-success {
+            background: rgba(34, 197, 94, 0.15);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            color: #86efac;
+        }
+        .glass-status-error {
+            background: rgba(239, 68, 68, 0.15);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+        }
+        .glass-status-info {
+            background: rgba(59, 130, 246, 0.15);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            color: #93c5fd;
+        }
+        .glass-status-warning {
+            background: rgba(234, 179, 8, 0.15);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(234, 179, 8, 0.3);
+            color: #fde047;
+        }
+
+        /* 装饰光斑 */
+        .glow-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(60px);
+            opacity: 0.4;
+            animation: orbFloat 6s ease-in-out infinite;
+        }
+        @keyframes orbFloat {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(10px, -20px) scale(1.1); }
+        }
+
+        /* 滚动条美化 */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.3); }
+
+        /* 粒子动画 */
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            animation: particleFloat linear infinite;
+        }
+        @keyframes particleFloat {
+            0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-10vh) rotate(720deg); opacity: 0; }
         }
     </style>
 </head>
-<body class="font-inter min-h-screen ocean-bg flex items-center justify-center p-4 overflow-auto">
-    <div class="fixed inset-0 pointer-events-none">
-        <div class="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-blue-400/30 to-transparent wave-animation"></div>
-        <div class="absolute bottom-10 left-10 w-20 h-20 bg-white/10 rounded-full blur-xl"></div>
-        <div class="absolute bottom-20 right-20 w-32 h-32 bg-white/10 rounded-full blur-xl"></div>
-        <div class="absolute top-20 left-1/4 w-16 h-16 bg-white/5 rounded-full blur-lg"></div>
+<body class="min-h-screen ocean-bg flex items-center justify-center p-4 overflow-auto relative">
+    <!-- 背景装饰 -->
+    <div class="fixed inset-0 pointer-events-none overflow-hidden">
+        <!-- 光斑 -->
+        <div class="glow-orb w-64 h-64 bg-blue-400/30 top-1/4 -left-20" style="animation-delay: 0s;"></div>
+        <div class="glow-orb w-80 h-80 bg-cyan-400/20 bottom-1/4 -right-20" style="animation-delay: 2s;"></div>
+        <div class="glow-orb w-48 h-48 bg-sky-300/20 top-10 right-1/4" style="animation-delay: 4s;"></div>
+
+        <!-- 波浪 -->
+        <div class="absolute bottom-0 left-0 right-0 h-40 wave-animation">
+            <svg viewBox="0 0 1440 120" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-full opacity-20">
+                <path d="M0,64L48,69.3C96,75,192,85,288,80C384,75,480,53,576,48C672,43,768,53,864,64C960,75,1056,85,1152,80C1248,75,1344,53,1392,42.7L1440,32L1440,120L0,120Z" fill="rgba(255,255,255,0.1)"/>
+            </svg>
+        </div>
+
+        <!-- 粒子 -->
+        <div class="particle" style="left:10%; animation-duration:12s; animation-delay:0s;"></div>
+        <div class="particle" style="left:20%; animation-duration:15s; animation-delay:2s;"></div>
+        <div class="particle" style="left:35%; animation-duration:11s; animation-delay:4s;"></div>
+        <div class="particle" style="left:50%; animation-duration:14s; animation-delay:1s;"></div>
+        <div class="particle" style="left:65%; animation-duration:13s; animation-delay:3s;"></div>
+        <div class="particle" style="left:80%; animation-duration:16s; animation-delay:5s;"></div>
+        <div class="particle" style="left:90%; animation-duration:12s; animation-delay:2.5s;"></div>
     </div>
 
     <div class="w-full max-w-lg relative z-10">
+        <!-- 标题区域 -->
         <div class="text-center mb-8">
-            <div class="inline-flex items-center justify-center w-20 h-20 bg-white/60 rounded-full mb-4 backdrop-blur-sm float-animation">
-                <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+            <div class="inline-flex items-center justify-center w-20 h-20 glass-panel rounded-2xl mb-4 float-animation">
+                <svg class="w-10 h-10 text-sky-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 3c-1.5 2-3 4-3 6a3 3 0 006 0c0-2-1.5-4-3-6z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12v6a3 3 0 006 0v-6"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 21h8"/>
                 </svg>
             </div>
-            <h1 class="text-3xl font-bold text-white mb-2">漂流瓶</h1>
-            <p class="text-white/80">Wormwaker是给</p>
+            <h1 class="text-3xl font-bold text-white mb-2 tracking-wide">漂流瓶</h1>
+            <p class="text-sky-200/60 text-sm">Wormwaker是给</p>
         </div>
 
-        <div class="bottle-glass rounded-3xl p-8 shadow-2xl">
+        <!-- 主卡片 -->
+        <div class="glass-card rounded-3xl p-8">
             <!-- Tabs -->
             <div class="flex gap-2 mb-6">
-                <button onclick="switchTab('send')" id="sendTab" class="tab-btn flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all duration-200 bg-primary text-white">📤 扔漂流瓶</button>
-                <button onclick="switchTab('pick')" id="pickTab" class="tab-btn flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all duration-200 bg-gray-100 text-gray-600">🧺 捡漂流瓶</button>
-                <button onclick="switchTab('history')" id="historyTab" class="tab-btn flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all duration-200 bg-gray-100 text-gray-600">📜 历史</button>
+                <button onclick="switchTab('send')" id="sendTab" class="tab-active flex-1 py-2.5 px-4 rounded-xl text-sm font-medium transition-all duration-300 text-white flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19V5m0 0l-5 5m5-5l5 5"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 21h14"/>
+                    </svg>
+                    扔漂流瓶
+                </button>
+                <button onclick="switchTab('pick')" id="pickTab" class="tab-inactive flex-1 py-2.5 px-4 rounded-xl text-sm font-medium transition-all duration-300 text-white/70 flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v14m0 0l-5-5m5 5l5-5"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3h14"/>
+                    </svg>
+                    捡漂流瓶
+                </button>
+                <button onclick="switchTab('history')" id="historyTab" class="tab-inactive flex-1 py-2.5 px-4 rounded-xl text-sm font-medium transition-all duration-300 text-white/70 flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    历史
+                </button>
             </div>
 
             <!-- 扔漂流瓶 -->
             <div id="sendSection">
                 <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">写下你的留言</label>
-                    <textarea id="bottleContent" rows="5" placeholder="写下你想说的话" class="w-full px-4 py-3 border border-gray-200 rounded-xl input-focus transition-all duration-200 resize-none bg-white/50"></textarea>
-                    <div class="flex justify-between items-center mt-1">
-                        <label class="text-xs text-gray-500"><input id="anonymousChk" type="checkbox" checked class="mr-2"> 匿名</label>
-                        <p class="text-xs text-gray-500"><span id="bottleCharCount">0</span> 字符</p>
+                    <label class="block text-sm font-medium text-white/80 mb-2">写下你的留言</label>
+                    <textarea id="bottleContent" rows="5" placeholder="写下你想说的话..." class="w-full px-4 py-3 glass-input rounded-xl transition-all duration-300 resize-none text-white text-sm"></textarea>
+                    <div class="flex justify-between items-center mt-2">
+                        <label class="text-xs text-white/50 flex items-center gap-2 cursor-pointer">
+                            <input id="anonymousChk" type="checkbox" checked class="w-3.5 h-3.5 rounded accent-sky-400">
+                            匿名发送
+                        </label>
+                        <p class="text-xs text-white/40"><span id="bottleCharCount">0</span> 字符</p>
                     </div>
                 </div>
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">显示名字（若不匿名）</label>
-                    <input id="senderName" type="text" placeholder="你的名字（可选）" class="w-full px-4 py-2 border border-gray-200 rounded-xl input-focus bg-white/50" />
+                <div class="mb-5">
+                    <label class="block text-sm font-medium text-white/80 mb-2">显示名字（若不匿名）</label>
+                    <input id="senderName" type="text" placeholder="你的名字（可选）" class="w-full px-4 py-2.5 glass-input rounded-xl text-white text-sm" />
                 </div>
-                <button onclick="sendBottle()" class="btn-primary w-full flex items-center justify-center gap-2">
+                <button onclick="sendBottle()" class="btn-glass w-full flex items-center justify-center gap-2 text-white px-6 py-3.5 rounded-xl font-medium text-sm">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
                     </svg>
                     扔出漂流瓶
                 </button>
@@ -87,66 +284,84 @@
             <!-- 捡漂流瓶 -->
             <div id="pickSection" class="hidden">
                 <!-- 加载状态 -->
-                <div id="pickLoading" class="hidden text-center py-8">
-                    <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
-                        <svg class="w-8 h-8 text-primary animate-spin" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <div id="pickLoading" class="hidden text-center py-10">
+                    <div class="inline-flex items-center justify-center w-16 h-16 glass-panel rounded-2xl mb-4">
+                        <svg class="w-8 h-8 text-sky-300 animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"></circle>
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                         </svg>
                     </div>
-                    <p class="text-gray-600">正在搜寻漂流瓶...</p>
+                    <p class="text-white/60 text-sm">正在搜寻漂流瓶...</p>
                 </div>
 
                 <!-- 初始状态 -->
-                <div id="pickIdle" class="text-center py-8">
-                    <div class="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
-                        <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                <div id="pickIdle" class="text-center py-10">
+                    <div class="inline-flex items-center justify-center w-16 h-16 glass-panel rounded-2xl mb-4">
+                        <svg class="w-8 h-8 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 3c-1.5 2-3 4-3 6a3 3 0 006 0c0-2-1.5-4-3-6z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12v6a3 3 0 006 0v-6"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 21h8"/>
                         </svg>
                     </div>
-                    <p class="text-gray-600 mb-4">还没有捡到漂流瓶</p>
-                    <button id="pickBtn" onclick="pickBottle()" class="btn-primary">去海里捞一个</button>
+                    <p class="text-white/60 mb-5 text-sm">还没有捡到漂流瓶</p>
+                    <button id="pickBtn" onclick="pickBottle()" class="btn-glass text-white px-6 py-3 rounded-xl font-medium text-sm">去海里捞一个</button>
                 </div>
 
                 <!-- 捡到瓶子 -->
                 <div id="pickFound" class="hidden">
-                    <div class="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl p-6 mb-6">
-                        <div class="flex items-center gap-2 mb-3">
-                            <span class="text-2xl">🍾</span>
-                            <span class="text-sm font-medium text-amber-700">你捡到了一个漂流瓶！</span>
+                    <div class="glass-amber rounded-2xl p-6 mb-6">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="w-8 h-8 flex items-center justify-center bg-amber-400/20 rounded-lg">
+                                <svg class="w-5 h-5 text-amber-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 3c-1.5 2-3 4-3 6a3 3 0 006 0c0-2-1.5-4-3-6z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12v6a3 3 0 006 0v-6"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 21h8"/>
+                                </svg>
+                            </div>
+                            <span class="text-sm font-medium text-amber-200">你捡到了一个漂流瓶！</span>
                         </div>
-                        <p id="bottleMessage" class="text-gray-700 whitespace-pre-wrap"></p>
-                        <div class="mt-4 pt-4 border-t border-amber-200">
-                            <p id="messageMeta" class="text-xs text-amber-600">来自：匿名</p>
+                        <p id="bottleMessage" class="text-white/85 whitespace-pre-wrap text-sm leading-relaxed"></p>
+                        <div class="mt-4 pt-4 border-t border-amber-400/20">
+                            <p id="messageMeta" class="text-xs text-amber-300/70">来自：匿名</p>
                         </div>
                     </div>
-                    <button id="pickAgainBtn" onclick="pickBottle()" class="btn-primary w-full flex items-center justify-center gap-2">
+                    <button id="pickAgainBtn" onclick="pickBottle()" class="btn-glass w-full flex items-center justify-center gap-2 text-white px-6 py-3.5 rounded-xl font-medium text-sm">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                         </svg>
                         再捞一个
                     </button>
                 </div>
 
                 <!-- 全部捡完 -->
-                <div id="pickDone" class="hidden text-center py-8">
-                    <div class="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
-                        <span class="text-3xl">🎉</span>
+                <div id="pickDone" class="hidden text-center py-10">
+                    <div class="inline-flex items-center justify-center w-16 h-16 glass-panel rounded-2xl mb-4">
+                        <svg class="w-8 h-8 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
                     </div>
-                    <p class="text-gray-700 font-medium mb-2">你已经捡完了所有漂流瓶！</p>
-                    <p class="text-gray-500 text-sm">由于代码问题，如果你新扔出了一个漂流瓶，你需要刷新网页才能获取</p>
+                    <p class="text-white/80 font-medium mb-2 text-sm">你已经捡完了所有漂流瓶！</p>
+                    <p class="text-white/40 text-xs">由于代码问题，如果你新扔出了一个漂流瓶，你需要刷新网页才能获取</p>
                 </div>
             </div>
 
             <!-- 历史 -->
             <div id="historySection" class="hidden">
                 <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-sm font-medium text-gray-700">已捡到的瓶子 (<span id="historyCount">0</span>)</h3>
-                    <button onclick="clearHistory()" class="text-xs text-red-400 hover:text-red-600 transition-colors">清空记录</button>
+                    <h3 class="text-sm font-medium text-white/80">已捡到的瓶子 (<span id="historyCount">0</span>)</h3>
+                    <button onclick="clearHistory()" class="text-xs text-red-300/70 hover:text-red-300 transition-colors flex items-center gap-1">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                        清空记录
+                    </button>
                 </div>
-                <div id="historyList" class="space-y-3 max-h-96 overflow-y-auto"></div>
-                <div id="historyEmpty" class="text-center py-8 text-gray-400">
-                    <p>还没有捡过漂流瓶</p>
+                <div id="historyList" class="space-y-3 max-h-96 overflow-y-auto pr-1"></div>
+                <div id="historyEmpty" class="text-center py-10 text-white/30">
+                    <svg class="w-10 h-10 mx-auto mb-3 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+                    </svg>
+                    <p class="text-sm">还没有捡过漂流瓶</p>
                 </div>
             </div>
 
@@ -156,25 +371,32 @@
             </div>
 
             <!-- 统计 -->
-            <div class="mt-6 pt-6 border-t border-gray-200">
-                <div class="flex justify-center gap-8 text-center">
+            <div class="mt-6 pt-6 border-t border-white/10">
+                <div class="flex justify-center gap-10 text-center">
                     <div>
-                        <p class="text-2xl font-bold text-gray-700" id="statTotal">--</p>
-                        <p class="text-xs text-gray-500">总漂流瓶</p>
+                        <p class="text-2xl font-bold text-white" id="statTotal">--</p>
+                        <p class="text-xs text-white/40 mt-1">总漂流瓶</p>
                     </div>
+                    <div class="w-px bg-white/10"></div>
                     <div>
-                        <p class="text-2xl font-bold text-gray-700" id="statPicked">0</p>
-                        <p class="text-xs text-gray-500">你捡到的</p>
+                        <p class="text-2xl font-bold text-white" id="statPicked">0</p>
+                        <p class="text-xs text-white/40 mt-1">你捡到的</p>
                     </div>
+                    <div class="w-px bg-white/10"></div>
                     <div>
-                        <p class="text-2xl font-bold text-gray-700" id="statRemain">--</p>
-                        <p class="text-xs text-gray-500">剩余可捡</p>
+                        <p class="text-2xl font-bold text-white" id="statRemain">--</p>
+                        <p class="text-xs text-white/40 mt-1">剩余可捡</p>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="text-center mt-6 text-white/60 text-sm">Powered by TextDB.online</div>
+        <div class="text-center mt-6 text-white/30 text-xs flex items-center justify-center gap-1.5">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+            </svg>
+            Powered by TextDB.online
+        </div>
     </div>
 
     <script>
@@ -183,17 +405,14 @@
 
         let totalBottles = 0;
 
-        // ===== DOM refs =====
         const $ = id => document.getElementById(id);
 
-        // ===== Cookie =====
         function setCookie(name, value, days = 365) {
             const d = new Date();
             d.setTime(d.getTime() + days*86400000);
             document.cookie = `${name}=${encodeURIComponent(value)};expires=${d.toUTCString()};path=/;SameSite=Lax`;
         }
 
-        // ===== localStorage helpers =====
         function getReadBottles() {
             try {
                 const s = localStorage.getItem('readBottles');
@@ -237,23 +456,21 @@
             return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
         }
 
-        // ===== 状态显示 =====
         function showStatus(msg, type = 'info') {
             const el = $('statusMessage');
             const content = $('statusContent');
             el.classList.remove('hidden');
             const colors = {
-                success: 'bg-green-50 text-green-700 border border-green-200',
-                error: 'bg-red-50 text-red-700 border border-red-200',
-                info: 'bg-blue-50 text-blue-700 border border-blue-200',
-                warning: 'bg-yellow-50 text-yellow-700 border border-yellow-200'
+                success: 'glass-status-success',
+                error: 'glass-status-error',
+                info: 'glass-status-info',
+                warning: 'glass-status-warning'
             };
             content.className = `p-4 rounded-xl text-sm ${colors[type] || colors.info}`;
             content.textContent = msg;
             setTimeout(() => el.classList.add('hidden'), 3000);
         }
 
-        // ===== 界面状态管理（互斥显示） =====
         function showPickState(state) {
             $('pickLoading').classList.add('hidden');
             $('pickIdle').classList.add('hidden');
@@ -266,7 +483,6 @@
             else if (state === 'done') $('pickDone').classList.remove('hidden');
         }
 
-        // ===== 统计更新 =====
         function updateStats() {
             const readArr = getReadBottles();
             const validCount = readArr.filter(n => n >= 1 && n <= totalBottles).length;
@@ -275,10 +491,9 @@
             $('statRemain').textContent = totalBottles > 0 ? Math.max(0, totalBottles - validCount) : '--';
         }
 
-        // ===== Tab =====
         function switchTab(tab) {
-            const activeCls = 'tab-btn flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all duration-200 bg-primary text-white';
-            const inactiveCls = 'tab-btn flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all duration-200 bg-gray-100 text-gray-600';
+            const activeCls = 'tab-active flex-1 py-2.5 px-4 rounded-xl text-sm font-medium transition-all duration-300 text-white flex items-center justify-center gap-2';
+            const inactiveCls = 'tab-inactive flex-1 py-2.5 px-4 rounded-xl text-sm font-medium transition-all duration-300 text-white/70 flex items-center justify-center gap-2';
 
             $('sendTab').className = inactiveCls;
             $('pickTab').className = inactiveCls;
@@ -301,7 +516,6 @@
             }
         }
 
-        // ===== 检查是否全部捡完 =====
         function checkPickDone() {
             if (totalBottles <= 0) {
                 showPickState('idle');
@@ -312,10 +526,8 @@
             if (validCount >= totalBottles) {
                 showPickState('done');
             }
-            // 如果不是 done，保持当前状态不变
         }
 
-        // ===== API =====
         async function fetchKey(key) {
             try {
                 const controller = new AbortController();
@@ -342,7 +554,6 @@
             return t ? (parseInt(t, 10) || 0) : 0;
         }
 
-        // ===== 扔漂流瓶 =====
         async function sendBottle() {
             const content = $('bottleContent').value.trim();
             const anonymous = $('anonymousChk')?.checked ?? true;
@@ -369,13 +580,12 @@
                 $('bottleCharCount').textContent = '0';
                 totalBottles = nextIdx;
                 updateStats();
-                showStatus('🎉 漂流瓶已成功扔进大海', 'success');
+                showStatus('漂流瓶已成功扔进大海！', 'success');
             } else {
                 showStatus('扔漂流瓶失败，再试试吧', 'error');
             }
         }
 
-        // ===== 捡漂流瓶 =====
         async function pickBottle() {
             showPickState('loading');
 
@@ -389,20 +599,17 @@
                 return;
             }
 
-            // 构建可用列表
             const readSet = new Set(getReadBottles().filter(n => n >= 1 && n <= pageIndex));
             const available = [];
             for (let i = 1; i <= pageIndex; i++) {
                 if (!readSet.has(i)) available.push(i);
             }
 
-            // 全部捡完
             if (available.length === 0) {
                 showPickState('done');
                 return;
             }
 
-            // 洗牌
             for (let i = available.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [available[i], available[j]] = [available[j], available[i]];
@@ -433,31 +640,26 @@
 
                 if (!ok) { netFails++; continue; }
 
-                // 空瓶子标记已读跳过
                 if (!content) {
                     addReadBottle(idx);
                     continue;
                 }
 
-                // 解析来源
                 let meta = '匿名';
                 const lines = content.split('\n');
                 const lastLine = lines[lines.length - 1];
                 if (lastLine && lastLine.startsWith('— ')) meta = lastLine.substring(2);
 
-                // 显示
                 $('bottleMessage').textContent = content;
                 $('messageMeta').textContent = '来自：' + meta;
                 showPickState('found');
 
-                // 记录
                 addReadBottle(idx);
                 addToHistory(idx, content, meta);
                 updateStats();
                 return;
             }
 
-            // 循环结束没找到
             updateStats();
             const readArr = getReadBottles();
             const validCount = readArr.filter(n => n >= 1 && n <= totalBottles).length;
@@ -472,7 +674,6 @@
             }
         }
 
-        // ===== 历史 =====
         function renderHistory() {
             const arr = getHistory();
             $('historyCount').textContent = arr.length;
@@ -484,11 +685,16 @@
             }
             $('historyEmpty').classList.add('hidden');
             $('historyList').innerHTML = arr.map(item => `
-                <div class="bg-gray-50 border border-gray-100 rounded-xl p-4">
-                    <p class="text-sm text-gray-700 whitespace-pre-wrap mb-2">${escapeHtml(item.content)}</p>
+                <div class="glass-history-item rounded-xl p-4">
+                    <p class="text-sm text-white/75 whitespace-pre-wrap mb-3 leading-relaxed">${escapeHtml(item.content)}</p>
                     <div class="flex justify-between items-center">
-                        <span class="text-xs text-gray-400">来自：${escapeHtml(item.from)}</span>
-                        <span class="text-xs text-gray-300">${item.time}</span>
+                        <span class="text-xs text-white/40 flex items-center gap-1">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                            </svg>
+                            ${escapeHtml(item.from)}
+                        </span>
+                        <span class="text-xs text-white/25">${item.time}</span>
                     </div>
                 </div>
             `).join('');
@@ -504,33 +710,33 @@
             showStatus('已清空', 'info');
         }
 
-        // ===== 定时刷新 =====
-        async function refreshTotal() {
+          async function refreshTotal() {
             const count = await getTotalBottles();
             if (count !== totalBottles) {
                 totalBottles = count;
                 updateStats();
-                // 如果之前是 done 状态，现在有新瓶子了，切回 idle
                 if (!$('pickDone').classList.contains('hidden') && count > getReadBottles().filter(n => n >= 1 && n <= count).length) {
                     showPickState('idle');
                 }
             }
         }
 
-        // ===== 初始化 =====
+        // 字数统计
+        document.addEventListener('input', e => {
+            if (e.target.id === 'bottleContent') {
+                $('bottleCharCount').textContent = e.target.value.length;
+            }
+        });
+
         document.addEventListener('DOMContentLoaded', async () => {
-            // 清除旧数据
             localStorage.removeItem('seenContents');
             localStorage.removeItem('nextBottleIndex');
             localStorage.removeItem('pickCount');
 
             totalBottles = await getTotalBottles();
             updateStats();
-
-            // 检查是否已捡完
             checkPickDone();
 
-            // 匿名复选框
             const anon = $('anonymousChk');
             if (anon) {
                 $('senderName').disabled = anon.checked;
@@ -539,7 +745,6 @@
                 });
             }
 
-            // 每分钟刷新
             setInterval(refreshTotal, 60000);
         });
     </script>
