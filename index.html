@@ -388,13 +388,21 @@
             border-radius: 20px;
             border: 1px solid var(--border);
             overflow: hidden;
-            transition: all 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            transition: all 0.3s ease;
+            cursor: pointer;
         }
 
+        /* ===== 与"与我联系"一致的悬停效果 ===== */
         .project-card:hover {
-            transform: translateY(-8px);
             border-color: var(--accent);
-            box-shadow: 0 10px 30px var(--accent-glow), 0 0 20px var(--accent-glow);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px var(--accent-glow);
+        }
+
+        /* ===== 点击/按下效果 ===== */
+        .project-card:active {
+            transform: translateY(-1px) scale(0.98);
+            box-shadow: 0 5px 15px var(--accent-glow);
         }
 
         .project-image {
@@ -413,6 +421,10 @@
 
         .project-card:nth-child(2) .project-image {
             background: linear-gradient(135deg, #0f2027, #203a43);
+        }
+
+        .project-card:nth-child(3) .project-image {
+            background: linear-gradient(135deg, #1a0a2e, #3b1d5e);
         }
 
         .project-info {
@@ -444,11 +456,17 @@
             font-weight: 600;
             transition: all 0.3s ease;
             box-shadow: 0 4px 15px var(--accent-glow);
+            border: none;
+            cursor: pointer;
         }
 
         .project-btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 8px 25px var(--accent-glow);
+        }
+
+        .project-btn:active {
+            transform: translateY(0) scale(0.97);
         }
 
         /* 联系 */
@@ -482,6 +500,11 @@
             border-color: var(--accent);
             transform: translateY(-3px);
             box-shadow: 0 10px 30px var(--accent-glow);
+        }
+
+        .contact-card:active {
+            transform: translateY(-1px) scale(0.98);
+            box-shadow: 0 5px 15px var(--accent-glow);
         }
 
         .contact-card .icon {
@@ -662,6 +685,15 @@
                     <a href="./irc/index.html" class="project-btn" target="_blank">访问网站</a>
                 </div>
             </div>
+            <!-- ===== 新增 zako~ 卡片 ===== -->
+            <div class="project-card fade-in">
+                <div class="project-image">✨</div>
+                <div class="project-info">
+                    <h3>zako~</h3>
+                    <p>自动为你的消息添加后缀</p>
+                    <button class="project-btn" onclick="downloadZako()">立即下载</button>
+                </div>
+            </div>
         </div>
     </section>
 
@@ -669,7 +701,7 @@
     <section id="announcement">
         <div class="section-header fade-in">
             <span class="section-tag">Announcement</span>
-            <h2>📢 公告</h2>
+            <h2> 公告</h2>
             <p>最新动态与通知</p>
         </div>
         <div class="announcement-box fade-in">
@@ -773,6 +805,39 @@
                 toast.classList.add('hide');
                 setTimeout(() => toast.remove(), 300);
             }, 2500);
+        }
+
+        // ===== zako~ 下载功能 =====
+        async function downloadZako() {
+            showToast('请稍后');
+            try {
+                const resp = await fetch('./download/');
+                if (!resp.ok) throw new Error('错误：目录不可访问');
+                const html = await resp.text();
+                // 从目录列表中提取 .zip 文件名
+                const match = html.match(/href="([^"]*\.zip)"/i);
+                if (match) {
+                    const fileName = match[1].replace(/^\.\//, '');
+                    const a = document.createElement('a');
+                    a.href = './download/' + fileName;
+                    a.download = fileName;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    showToast('✅ 开始下载: ' );
+                } else {
+                    showToast('⚠️ 未找到文件');
+                }
+            } catch (e) {
+                // 如果服务器不支持目录列表，尝试常见文件名
+                showToast('⚠️ 检测失败，尝试直接下载...');
+                const a = document.createElement('a');
+                a.href = './download/zako.zip';
+                a.download = 'zako.zip';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            }
         }
 
         // ===== 打字删除动画 =====
