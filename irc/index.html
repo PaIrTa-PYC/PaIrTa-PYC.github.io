@@ -1213,9 +1213,13 @@ async function poll() {
       for (const id of recent) {
         if (cache[id]) { msgs.push(cache[id]); mIds.push(id); }
       }
-           msgIdMap = mIds;
-      // 检查是否有非自己发的新消息
-      const hasNewFromOthers = msgs.some(m => m && !m.sys && m.u && m.u !== nick);
+        const prevMsgIds = new Set(msgIdMap);
+      msgIdMap = mIds;
+      const newMsgIds = mIds.filter(id => !prevMsgIds.has(id));
+      const hasNewFromOthers = newMsgIds.some(id => {
+        const m = cache[id];
+        return m && !m.sys && m.u && m.u !== nick;
+      });
       if (hasNewFromOthers) {
         msgSound.currentTime = 0;
         msgSound.play().catch(()=>{});
