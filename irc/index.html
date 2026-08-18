@@ -772,7 +772,7 @@ async function adminWarnUser(targetNick) {
     const reason = vals.reason || '违反规则';
     try {
       const msgId = rnd(24);
-      const body = JSON.stringify({ sys: ' targetNick + ' 被警告了 ' ：' + reason });
+      const body = JSON.stringify({ sys: ' 警告了' + targetNick + '：' + reason });
       await writeKV(msgId, body);
       let ids = [];
       try { const cur = await readKey(idxKey); if (Array.isArray(cur)) ids = cur; } catch(_){}
@@ -1213,7 +1213,7 @@ async function poll() {
       for (const id of recent) {
         if (cache[id]) { msgs.push(cache[id]); mIds.push(id); }
       }
-          const prevMsgIds = new Set(msgIdMap);
+            const prevMsgIds = new Set(msgIdMap);
       msgIdMap = mIds;
       const newMsgIds = mIds.filter(id => !prevMsgIds.has(id));
       if (newMsgIds.length > 0) {
@@ -1417,4 +1417,3 @@ $('iPass').addEventListener('keydown',e=>{if(e.key==='Enter')join()});
 </script>
 </body>
 </html>
-
