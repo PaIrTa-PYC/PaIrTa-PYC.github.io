@@ -772,7 +772,7 @@ async function adminWarnUser(targetNick) {
     const reason = vals.reason || '违反规则';
     try {
       const msgId = rnd(24);
-      const body = JSON.stringify({ sys: ' 【警告】' + targetNick + '：' + reason });
+      const body = JSON.stringify({ sys: ' targetNick + ' 被警告了 ' ：' + reason });
       await writeKV(msgId, body);
       let ids = [];
       try { const cur = await readKey(idxKey); if (Array.isArray(cur)) ids = cur; } catch(_){}
@@ -1213,17 +1213,14 @@ async function poll() {
       for (const id of recent) {
         if (cache[id]) { msgs.push(cache[id]); mIds.push(id); }
       }
-        const prevMsgIds = new Set(msgIdMap);
+          const prevMsgIds = new Set(msgIdMap);
       msgIdMap = mIds;
       const newMsgIds = mIds.filter(id => !prevMsgIds.has(id));
-      const hasNewFromOthers = newMsgIds.some(id => {
-        const m = cache[id];
-        return m && !m.sys && m.u && m.u !== nick;
-      });
-      if (hasNewFromOthers) {
+      if (newMsgIds.length > 0) {
         msgSound.currentTime = 0;
         msgSound.play().catch(()=>{});
       }
+
       render(msgs);
       $('cMeta').textContent = msgs.length + ' 条消息 · 轮询中';
     }
@@ -1395,12 +1392,10 @@ async function send() {
     if (ids.length > MAX_MSG) ids = ids.slice(ids.length - MAX_MSG);
     await writeKV(idxKey, JSON.stringify(ids));
 
-      cache[msgId] = msgObj;
+    cache[msgId] = msgObj;
     $('iMsg').value = '';
     $('iMsg').style.height = 'auto';
     lastSig = '';
-    msgSound.currentTime = 0;
-    msgSound.play().catch(()=>{});
     poll();
 
   } catch(e) {
