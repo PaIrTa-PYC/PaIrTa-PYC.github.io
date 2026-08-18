@@ -259,13 +259,6 @@ body{
     </div>
     <div class="hint-small">创建新房间时填写则设置密码；加入已有密码房间时需填写正确密码</div>
   </div>
-  <div class="fg">
-    <label>管理员密码 <span style="font-weight:400;text-transform:none;opacity:.6">(可选)</span></label>
-    <div class="pass-wrap">
-      <input id="iAdmin" type="password" maxlength="32" placeholder="管理员专用" autocomplete="off">
-      <span class="lock-ico">🛡️</span>
-    </div>
-  </div>
   <button class="btn-go" id="btnGo" onclick="join()">进入房间 →</button>
   <button class="btn-hall" id="btnHall" onclick="joinHall()"> 进入大厅 →</button>
   <div class="note">消息存储在 TextDB 公开服务，请勿发送敏感内容<br>每 IP 每日限 500 次写入</div>
@@ -302,9 +295,7 @@ body{
 </div>
 
 <script>
-// ===== [1] 彻底禁止右键菜单的"查看源代码"和"调试" =====
 document.addEventListener('contextmenu', e => {
-  // 只有在消息区域且是管理员时才允许自定义右键菜单
   if (!e.target.closest('.m[data-user]')) {
     e.preventDefault();
     return;
@@ -312,12 +303,9 @@ document.addEventListener('contextmenu', e => {
   if (!isAdmin && !e.target.closest('.m[data-user]')) {
     e.preventDefault();
   }
-  // 非管理员完全禁止右键
   if (!isAdmin) {
-    // 允许自己消息的右键（用于撤回）
     const msgEl = e.target.closest('.m[data-user]');
     if (msgEl && msgEl.getAttribute('data-user') === nick) {
-      // 允许，由自定义菜单处理
     } else {
       e.preventDefault();
     }
@@ -338,10 +326,9 @@ const POLL_MS = 3000;
 const HEARTBEAT_MS = 5000;
 const PRESENCE_TIMEOUT = 15000;
 const HALL_ROOM_ID = '123';
-const ADMIN_PASS = 'Wormwaker is gay';
-const RECALL_LIMIT = 60000; // 1分钟撤回
-const KICK_DURATION = 60000; // 踢出1分钟
-const REFRESH_INTERVAL = 300000; // 5分钟刷新防TTL
+const RECALL_LIMIT = 60000;
+const KICK_DURATION = 60000;
+const REFRESH_INTERVAL = 300000;
 
 // ===== STATE =====
 let nick='', room='', idxKey='', presenceKey='', passKey='', color='', timer=null, hbTimer=null, lastSig='', busy=false;
@@ -359,6 +346,8 @@ let roomOwner = '';
 let muteUntil = 0;
 let refreshTimer = null;
 let muteCheckTimer = null;
+let msgSound = new Audio('sounds/Message received.wav');
+
 
 // ===== 右键菜单 =====
 let ctxMenu = null;
@@ -474,7 +463,7 @@ function parseVal(text) {
   try { return JSON.parse(text); } catch { return text; }
 }
 
-// ===== [7] Cookie 记录用户名 =====
+// ===== Cookie 记录用户名 =====
 function setCookie(name, val, days) {
   const d = new Date();
   d.setTime(d.getTime() + days * 86400000);
@@ -484,13 +473,12 @@ function getCookie(name) {
   const m = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
   return m ? decodeURIComponent(m[2]) : '';
 }
-// 页面加载时自动填充
 (function(){
   const saved = getCookie('nxc_nick');
   if (saved) $('iNick').value = saved;
 })();
 
-// ===== [5] 弹窗工具 =====
+// ===== 弹窗工具 =====
 function showModal(title, fields, onConfirm, confirmText, confirmCls) {
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
@@ -526,8 +514,6 @@ async function updatePresence() {
     processPresence(data);
   } catch(_){}
 }
-
-// ===== 从这里继续（接 readPresence 函数） =====
 
 async function readPresence() {
   try {
@@ -579,7 +565,7 @@ document.addEventListener('click', e => {
   }
 });
 
-// ===== [9] 临时系统提示（3秒消失，所有人可见） =====
+// ===== 临时系统提示 =====
 function appendTempSysMsg(text) {
   const w = $('msgs');
   const empty = w.querySelector('.empty');
@@ -606,13 +592,13 @@ function appendSysMsg(text, type) {
   w.scrollTop = w.scrollHeight;
 }
 
-// ===== [3][5] 房间数据键 =====
+// ===== 房间数据键 =====
 function getOwnerKey() { return idxKey + '_owner'; }
 function getKickKey() { return idxKey + '_kicks'; }
 function getBanKey() { return idxKey + '_bans'; }
 function getMuteKey() { return idxKey + '_mutes'; }
 
-// ===== [3] 房主逻辑 =====
+// ===== 房主逻辑 =====
 async function initOwner() {
   if (isHall) { isOwner = false; roomOwner = ''; return; }
   try {
@@ -632,7 +618,7 @@ async function initOwner() {
   }
 }
 
-// ===== [5] 封禁/踢出/禁言 检查 =====
+// ===== 封禁/踢出/禁言 检查 =====
 async function checkKickStatus() {
   try {
     const kicks = await readKey(getKickKey());
@@ -716,7 +702,7 @@ function removeMuteUI() {
   if (muteCheckTimer) { clearInterval(muteCheckTimer); muteCheckTimer = null; }
 }
 
-// ===== [5] 管理员操作函数 =====
+// ===== 管理员操作函数 =====
 async function adminKickUser(targetNick) {
   try {
     let data = {};
@@ -724,13 +710,12 @@ async function adminKickUser(targetNick) {
     delete data[targetNick];
     await writeKV(presenceKey, JSON.stringify(data));
 
-     {
+    {
       let kicks = {};
       try { const k = await readKey(getKickKey()); if (k && typeof k === 'object') kicks = k; } catch(_){}
       kicks[targetNick] = Date.now() + KICK_DURATION;
       await writeKV(getKickKey(), JSON.stringify(kicks));
     }
-
 
     const msgId = rnd(24);
     const body = JSON.stringify({ sys: '🚫 ' + targetNick + ' 被管理员踢出了' + (isHall ? '大厅' : '房间') });
@@ -759,7 +744,7 @@ async function adminBanUser(targetNick) {
       bans[targetNick] = expiry;
       await writeKV(getBanKey(), JSON.stringify(bans));
 
-      let data = {};
+           let data = {};
       try { const cur = await readKey(presenceKey); if (cur && typeof cur === 'object') data = cur; } catch(_){}
       delete data[targetNick];
       await writeKV(presenceKey, JSON.stringify(data));
@@ -851,7 +836,7 @@ async function adminUnmuteUser(targetNick) {
   } catch(e) { toast('解除禁言失败: ' + e.message, 'err'); }
 }
 
-// ===== [3] 房主踢人 =====
+// ===== 房主踢人 =====
 async function ownerKickUser(targetNick) {
   try {
     let data = {};
@@ -879,7 +864,7 @@ async function ownerKickUser(targetNick) {
   } catch(e) { toast('踢出失败: ' + e.message, 'err'); }
 }
 
-// ===== [4] 消息撤回（所有用户，1分钟内） =====
+// ===== 消息撤回 =====
 async function recallMsg(msgId) {
   try {
     const msg = cache[msgId];
@@ -930,14 +915,13 @@ async function removeFromPresence(wasHall) {
     } else {
       await writeKV(presenceKey, JSON.stringify(data));
     }
-      if (!wasHall && Object.keys(data).length === 0) {
+    if (!wasHall && Object.keys(data).length === 0) {
       const clearUrl = BASE + '/update/?key=' + encodeURIComponent(idxKey) + '&value=' + encodeURIComponent(JSON.stringify([]));
       if (navigator.sendBeacon) { navigator.sendBeacon(clearUrl); }
       else {
         try { const xhr3 = new XMLHttpRequest(); xhr3.open('GET', clearUrl, false); xhr3.timeout = 3000; xhr3.send(); } catch(_){}
       }
     }
-
   } catch(_){}
 }
 
@@ -979,12 +963,11 @@ window.addEventListener('beforeunload', function(e) {
   else { e.preventDefault(); e.returnValue = '房间将关闭并清除数据！'; return e.returnValue; }
 });
 
-
 window.addEventListener('pagehide', () => {
   if (isInRoom) { removeFromPresenceSync(isHall); isInRoom = false; }
 });
 
-// ===== [2修复] 定期刷新数据防TTL过期 =====
+// ===== 定期刷新数据防TTL过期 =====
 async function refreshData() {
   if (!isInRoom) return;
   try {
@@ -996,11 +979,11 @@ async function refreshData() {
   } catch(_){}
 }
 
-// ===== [8] 被踢出/封禁实时检测 =====
+// ===== 被踢出/封禁实时检测 =====
 async function checkForceKick() {
   if (!isInRoom) return;
   try {
-       {
+    {
       const kicks = await readKey(getKickKey());
       if (kicks && typeof kicks === 'object' && kicks[nick]) {
         if (Date.now() < kicks[nick]) {
@@ -1028,14 +1011,13 @@ async function join() {
   const n = $('iNick').value.trim();
   const r = $('iRoom').value.trim();
   const p = $('iPass').value.trim();
-  const ap = $('iAdmin').value.trim();
 
   if (!n) { toast('请输入昵称','err'); return; }
   if (hasInvalidNickChars(n)) { toast('昵称包含非法字符，请修改','err'); return; }
   if (!r) { toast('请输入房间号','err'); return; }
   if (r === HALL_ROOM_ID) { toast('无效的房间号','err'); return; }
 
-  isAdmin = (ap === ADMIN_PASS);
+  isAdmin = false;
   nick = n;
   room = r;
   isHall = false;
@@ -1090,18 +1072,18 @@ async function join() {
     enterChat();
   } catch(e) {
     toast('连接失败: ' + e.message, 'err');
-    $('btnGo').disabled = false; $('btnGo').textContent = '进入房间 →';
+    $('btnGo').disabled = false;
+    $('btnGo').textContent = '进入房间 →';
   }
 }
 
 async function joinHall() {
   const n = $('iNick').value.trim();
-  const ap = $('iAdmin').value.trim();
 
   if (!n) { toast('请输入昵称','err'); return; }
   if (hasInvalidNickChars(n)) { toast('昵称包含非法字符，请修改','err'); return; }
 
-  isAdmin = (ap === ADMIN_PASS);
+  isAdmin = false;
   nick = n;
   room = HALL_ROOM_ID;
   isHall = true;
@@ -1116,7 +1098,7 @@ async function joinHall() {
   $('btnHall').disabled = true;
   $('btnHall').textContent = '进入中…';
 
-   try {
+  try {
     const canBan = await checkBanStatus();
     if (!canBan) { $('btnHall').disabled = false; $('btnHall').textContent = ' 进入大厅 →'; return; }
 
@@ -1124,7 +1106,6 @@ async function joinHall() {
     if (!canKick) { $('btnHall').disabled = false; $('btnHall').textContent = ' 进入大厅 →'; return; }
 
     let presenceData = null;
-
     try { presenceData = await readKey(presenceKey); } catch(_){}
     if (presenceData && typeof presenceData === 'object' && !Array.isArray(presenceData)) {
       const now = Date.now();
@@ -1148,7 +1129,8 @@ async function joinHall() {
     enterChat();
   } catch(e) {
     toast('连接失败: ' + e.message, 'err');
-    $('btnHall').disabled = false; $('btnHall').textContent = ' 进入大厅 →';
+    $('btnHall').disabled = false;
+    $('btnHall').textContent = ' 进入大厅 →';
   }
 }
 
@@ -1231,7 +1213,13 @@ async function poll() {
       for (const id of recent) {
         if (cache[id]) { msgs.push(cache[id]); mIds.push(id); }
       }
-      msgIdMap = mIds;
+           msgIdMap = mIds;
+      // 检查是否有非自己发的新消息
+      const hasNewFromOthers = msgs.some(m => m && !m.sys && m.u && m.u !== nick);
+      if (hasNewFromOthers) {
+        msgSound.currentTime = 0;
+        msgSound.play().catch(()=>{});
+      }
       render(msgs);
       $('cMeta').textContent = msgs.length + ' 条消息 · 轮询中';
     }
@@ -1403,15 +1391,18 @@ async function send() {
     if (ids.length > MAX_MSG) ids = ids.slice(ids.length - MAX_MSG);
     await writeKV(idxKey, JSON.stringify(ids));
 
-    cache[msgId] = msgObj;
+      cache[msgId] = msgObj;
     $('iMsg').value = '';
     $('iMsg').style.height = 'auto';
     lastSig = '';
+    msgSound.currentTime = 0;
+    msgSound.play().catch(()=>{});
     poll();
+
   } catch(e) {
     toast('发送失败: ' + e.message, 'err');
   }
-   busy = false;
+  busy = false;
   $('btnS').disabled = false;
   $('iMsg').focus();
 }
@@ -1423,8 +1414,8 @@ $('iMsg').addEventListener('input', function(){
 });
 $('iNick').addEventListener('keydown',e=>{if(e.key==='Enter')$('iRoom').focus()});
 $('iRoom').addEventListener('keydown',e=>{if(e.key==='Enter')$('iPass').focus()});
-$('iPass').addEventListener('keydown',e=>{if(e.key==='Enter')$('iAdmin').focus()});
-$('iAdmin').addEventListener('keydown',e=>{if(e.key==='Enter')join()});
+$('iPass').addEventListener('keydown',e=>{if(e.key==='Enter')join()});
 </script>
 </body>
 </html>
+
