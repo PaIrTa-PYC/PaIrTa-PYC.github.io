@@ -651,7 +651,6 @@
         </div>
     </nav>
 
-    <!-- 英雄区 - 全屏 -->
     <div class="hero" id="home">
         <div class="hero-content">
             <h1>
@@ -811,7 +810,7 @@
         async function downloadZako() {
             showToast('请稍后');
             try {
-                const resp = await fetch('./download/');
+                const resp = await fetch('main/download/');
                 if (!resp.ok) throw new Error('错误：目录不可访问');
                 const html = await resp.text();
                 // 从目录列表中提取 .zip 文件名
