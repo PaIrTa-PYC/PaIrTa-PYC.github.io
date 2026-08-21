@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PaIrTa_PYC的小站</title>
+    <title>PaIrTa_PYC的百宝箱</title>
     <style>
         * {
             margin: 0;
@@ -809,15 +809,15 @@
 
         // ===== zako~ 下载功能（基于 manifest.json）=====
         async function downloadZako() {
-            showToast('⏳ 正在获取文件列表...');
+            showToast('⏳ 正在获取文件列表喵...');
             try {
                 const resp = await fetch('./download/manifest.json');
-                if (!resp.ok) throw new Error('manifest.json 无法访问');
+                if (!resp.ok) throw new Error('manifest.json 无法访问喵');
                 const data = await resp.json();
                 const files = data.files || [];
 
                 if (files.length === 0) {
-                    showToast('⚠️ 没有可下载的文件');
+                    showToast('⚠️ 没有可下载的文件喵');
                     return;
                 }
 
@@ -836,7 +836,7 @@
                 });
 
             } catch (e) {
-                showToast('❌ 下载失败: ' + e.message);
+                showToast('❌ 下载失败喵: ' + e.message);
             }
         }
 
