@@ -687,11 +687,13 @@
             </div>
             <!-- ===== zako~ 卡片 ===== -->
             <div class="project-card fade-in">
-                <div class="project-image">🍥</div>
-                <div class="project-info">
-                    <h3>zako~</h3>
-                    <p>自动为你的消息添加后缀</p>
-                    <button class="project-btn" onclick="downloadZako()">立即下载</button>
+    <div class="project-image">🍥</div>
+    <div class="project-info">
+        <h3>zako~</h3>
+        <p>自动为你的消息添加后缀</p>
+        <div style="display:flex; gap:0.8rem; flex-wrap:wrap;">
+            <button class="project-btn" onclick="downloadStable()">下载稳定版</button>
+            <button class="project-btn" style="background:var(--gradient-2);" onclick="downloadDev()">下载开发版</button>
                 </div>
             </div>
         </div>
@@ -808,37 +810,52 @@
         }
 
         // ===== zako~ 下载功能（基于 manifest.json）=====
-        async function downloadZako() {
-            showToast('⏳ 正在获取文件列表喵...');
-            try {
-                const resp = await fetch('./download/manifest.json');
-                if (!resp.ok) throw new Error('manifest.json 无法访问喵');
-                const data = await resp.json();
-                const files = data.files || [];
+async function downloadStable() {
+    showToast(' 正在获取稳定版喵...');
+    try {
+        const resp = await fetch('./download/manifest.json');
+        if (!resp.ok) throw new Error('manifest.json 无法访问');
+        const data = await resp.json();
+        const files = data.stable || [];
+        if (files.length === 0) { showToast('⚠️ 没有稳定版文件喵'); return; }
+        showToast(' 开始下载稳定版喵...');
+        files.forEach((fileName, i) => {
+            setTimeout(() => triggerDownload(fileName), i * 500);
+        });
+    } catch (e) {
+        showToast('❌ 下载失败喵: ' + e.message);
+    }
+}
 
-                if (files.length === 0) {
-                    showToast('⚠️ 没有可下载的文件喵');
-                    return;
-                }
+function downloadDev() {
+    if (!confirm('⚠️ 开发版不代表最终品质，且可能存在重大bug，是否继续喵？')) return;
+    showToast(' 正在获取开发版喵...');
+    fetch('./download/manifest.json')
+        .then(resp => {
+            if (!resp.ok) throw new Error('manifest.json 无法访问喵');
+            return resp.json();
+        })
+        .then(data => {
+            const files = data.dev || [];
+            if (files.length === 0) { showToast('⚠️ 没有开发版文件喵'); return; }
+            showToast(' 开始下载开发版...');
+            files.forEach((fileName, i) => {
+                setTimeout(() => triggerDownload(fileName), i * 500);
+            });
+        })
+        .catch(e => showToast('❌ 下载失败喵: ' + e.message));
+}
 
-                showToast('⬇️ 开始下载 ' + files.length + ' 个文件...');
+function triggerDownload(fileName) {
+    const encodedName = encodeURIComponent(fileName);
+    const a = document.createElement('a');
+    a.href = './download/' + encodedName;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+}
 
-                files.forEach((fileName, i) => {
-                    setTimeout(() => {
-                        const encodedName = encodeURIComponent(fileName);
-                        const a = document.createElement('a');
-                        a.href = './download/' + encodedName;
-                        a.download = fileName;
-                        document.body.appendChild(a);
-                        a.click();
-                        document.body.removeChild(a);
-                    }, i * 500);
-                });
-
-            } catch (e) {
-                showToast('❌ 下载失败喵: ' + e.message);
-            }
-        }
 
         // ===== 打字删除动画 =====
         const names = ['PaIrTa_PYC', '琳沐ou'];
