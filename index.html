@@ -810,7 +810,7 @@
         async function downloadZako() {
             showToast('请稍后');
             try {
-                const resp = await fetch('main/download/');
+                const resp = await fetch('root/download/');
                 if (!resp.ok) throw new Error('错误：目录不可访问');
                 const html = await resp.text();
                 // 从目录列表中提取 .zip 文件名
@@ -818,7 +818,7 @@
                 if (match) {
                     const fileName = match[1].replace(/^\.\//, '');
                     const a = document.createElement('a');
-                    a.href = './download/' + fileName;
+                    a.href = 'root/download/' + fileName;
                     a.download = fileName;
                     document.body.appendChild(a);
                     a.click();
@@ -831,7 +831,7 @@
                 // 如果服务器不支持目录列表，尝试常见文件名
                 showToast('✅ 开始下载');
                 const a = document.createElement('a');
-                a.href = 'main/download/zako~ 1.0.0.zip';
+                a.href = 'root/download/zako~ 1.0.0.zip';
                 a.download = 'zako~ 1.0.0.zip';
                 document.body.appendChild(a);
                 a.click();
