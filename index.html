@@ -808,16 +808,22 @@
 
         // ===== zako~ 下载功能 =====
         async function downloadZako() {
-           showToast('请稍后');
-         const fileName = 'zako~ 1.0.0.zip';
-         const encodedName = encodeURIComponent(fileName);  // zako~%201.0.0.zip
-         const a = document.createElement('a');
-         a.href = './download/' + encodedName;
-         a.download = fileName;  // download 属性保持原始文件名
-         document.body.appendChild(a);
-         a.click();
-         document.body.removeChild(a);
-            showToast('✅ 开始下载');
+            showToast('请稍后');
+            try {
+                const resp = await fetch('root/download/');
+                if (!resp.ok) throw new Error('错误：目录不可访问');
+                const html = await resp.text();
+                // 从目录列表中提取 .zip 文件名
+                const match = html.match(/href="([^"]*\.zip)"/i);
+                if (match) {
+                    const fileName = match[1].replace(/^\.\//, '');
+                    const a = document.createElement('a');
+                    a.href = 'root/download/' + fileName;
+                    a.download = fileName;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    showToast('✅ 开始下载: ' );
                 } else {
                     showToast('⚠️ 未找到文件');
                 }
